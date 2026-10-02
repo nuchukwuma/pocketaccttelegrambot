@@ -1,0 +1,103 @@
+# Local-First Sync — wired to the real Ledger domain model
+
+This supersedes the earlier generic books/entries/contacts scaffold. Every
+entity here matches what `Ledgercontext.jsx` already works with: `business`,
+`products`, `transactions`, `settlements`, `pendingOrders`, `invoices`.
+
+## What changed, file by file
+
+**Changed:**
+- `client/src/db.js` — Dexie stores for the six real entities.
+- `client/src/useCompanySync.js` — generic sync engine (bootstrap, delta,
+  Socket.io mirroring, offline outbox), entity-agnostic.
+- `client/src/Ledgercontext.jsx` — full rewrite. Same exported API
+  (`useLedger()` returns the same field names as before), but the base
+  arrays now come from `useCompanySync` instead of `useState`, mirrored to
+  IndexedDB and MongoDB. All the *derived* logic (`cashBookEntries`,
+  `postings`, `accounts`, `trialBalance`, `pnl`, `debtors`, `creditors`) is
+  untouched — it was already a pure function of the base arrays.
+- `client/src/Login.jsx` — one small addition: `deriveCompanyId()` hashes
+  `businessName + contact` into a stable `id`, attached to the profile
+  passed to `onAuthenticated`. This is what lets the same business log in
+  from a second device and land on the same synced company. It's a
+  deterministic stand-in for real auth, not real auth — see the comment
+  in the file for what to swap in when you add a proper backend login.
+- `server/models/*.js` — Business, Product, Transaction, Settlement,
+  PendingOrder, Invoice — one Mongoose model per entity.
+- `server/routes/sync.js` — registry now points at the six real models.
+  `business` is handled as a singleton (`findOne` by `id === companyId`)
+  everywhere else uses `find({ companyId })`.
+- `server/server.js` — unchanged from before (it was already
+  entity-agnostic — just Express + Socket.io + the sync router).
+
+**Unchanged — no edits needed:**
+`App.jsx`, `Books.jsx`, `Cashbook.jsx`, `Purchasesjournal.jsx`,
+`Pettycash.jsx`, `Salesjournal.jsx`, `Generalledger.jsx`, `Pnlstatement.jsx`,
+`Reminders.jsx`, `Inventory.jsx`, `Addentry.jsx`, `Invoice.jsx`,
+`Dashboard.jsx`. This is the actual payoff of the derived-selector
+architecture you already had: every one of these files talks to
+`useLedger()` by field name, and the field names didn't move. A few
+specific compatibility notes on why nothing broke:
+
+- **Inventory.jsx** calls `setProducts(prevArrayOrUpdaterFn)` directly in a
+  couple of places instead of going through `adjustInventory`. The new
+  `setProducts` in `Ledgercontext.jsx` accepts that same shape, diffs the
+  result against the synced array, and persists only what changed —
+  Inventory.jsx has no idea the backing store changed underneath it.
+- **Addentry.jsx / Invoice.jsx / Reminders.jsx** call `addTransaction()`,
+  `addInvoice()`, `addSettlement()`, `addPendingOrder()`,
+  `fulfillPendingOrder()` and use the *return value* synchronously (e.g.
+  `const created = addTransaction(tx); setSaved({...created})`). All of
+  these still return the stamped record immediately — the Dexie write and
+  server POST happen in the background via `mutate()`, not blocking the
+  return.
+
+## Business / auth flow
+
+There's no real backend auth in this app yet (Login.jsx fakes it with a
+`setTimeout`). `deriveCompanyId` gives you a working stand-in: signing in
+with the same business name + contact number always resolves to the same
+`companyId`, so:
+
+1. First signup on Device A: `authProfile` is set locally, `bootstrap()`
+   finds nothing on the server for that `companyId`, so `Ledgercontext`
+   pushes the profile as the canonical `business` record.
+2. Signin on Device B with the same business name + contact: `bootstrap()`
+   finds the existing `business` record and that becomes the source of
+   truth — including fields Device B's signin form never asked for (CAC,
+   industry, email).
+
+When you're ready for real auth, replace `deriveCompanyId` with a call to
+your login endpoint that returns the account's actual `companyId` — nothing
+else in this flow needs to change, since `Ledgercontext` only cares that
+`authProfile.id` is stable and correct.
+
+## Setup
+
+Same as before:
+
+```bash
+cd server && npm install && cp .env.example .env && npm run dev
+```
+
+Client side, install the extra deps and set `VITE_SYNC_SERVER_URL` if your
+server isn't on `http://localhost:4000`:
+
+```bash
+npm install dexie dexie-react-hooks socket.io-client
+```
+
+Drop `db.js`, `useCompanySync.js`, and the updated `Ledgercontext.jsx` /
+`Login.jsx` into your `src/assets/` (and `src/assets/booksofacc/` for
+`Ledgercontext.jsx`) in place of the originals. Everything else in your
+tree is untouched.
+
+## Adding a 7th entity later
+
+1. Dexie store in `db.js`.
+2. Mongoose model in `server/models/`.
+3. Register it in `ENTITY_MODELS` (`routes/sync.js`) and `ENTITY_TABLE`
+   (`useCompanySync.js`).
+4. Build whatever domain function you need in `Ledgercontext.jsx` on top of
+   `mutate('yourEntity', action, record)` — same pattern as
+   `addSettlement`/`addPendingOrder`.

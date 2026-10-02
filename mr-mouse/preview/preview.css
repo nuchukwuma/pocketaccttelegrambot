@@ -1,0 +1,5 @@
+/* The preview's Vite root is preview/, so Tailwind only scans this
+   folder by default and emits none of the utilities used in src/.
+   Point it at the real source tree. */
+@import "../src/index.css";
+@source "../src";

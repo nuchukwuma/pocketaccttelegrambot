@@ -1,0 +1,20 @@
+{
+  "name": "mrmouse-telegram-bot",
+  "version": "2.0.0",
+  "description": "Telegram bot that joins the mrmouse app's own Socket.io sync mesh as a real peer, with Turso as an optional durable cache/backup layer.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
+    "@libsql/client": "^0.14.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pdfkit": "^0.15.2",
+    "socket.io-client": "^4.7.5",
+    "telegraf": "^4.16.3"
+  }
+}

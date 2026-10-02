@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+mr-mouse/node_modules/
+mr-mouse/dist/
+mr-mouse/build/
+mr-mouse/android/
+
+.envmr-mouse/
+.env
+**/.env
