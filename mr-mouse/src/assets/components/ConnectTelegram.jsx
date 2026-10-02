@@ -1,22 +1,30 @@
 import React, { useState } from "react";
+import ConsentGate from "../legal/ConsentGate";
 import { MessageCircle, Copy, Check } from "lucide-react";
 import { useLedger } from "../booksofacc/Ledgercontext";
+import { botFetch } from "../botApi";
 
-// Drop this into a settings page in the app (e.g. rendered from Dashboard
-// or a new settings.jsx). It calls the BOT SERVER directly with a shared
-// key — see the "harden this" note in the bot's README before shipping
-// broadly; for now this is enough to get the opt-in flow working end to
-// end.
+// Pairs a Telegram chat with this business. Calls the bot server with the
+// signed-in person's own token (see ../botApi.js).
 //
-// Env vars needed in the React app's .env (Vite):
+// Env vars in the React app's .env (Vite):
 //   VITE_BOT_SERVER_URL=https://your-bot-server.example.com
-//   VITE_BOT_API_KEY=<same value as BOT_API_KEY in the bot's .env>
+//   VITE_TELEGRAM_BOT_USERNAME=<the bot's @username, without the @>
 
-const BOT_SERVER_URL = import.meta.env?.VITE_BOT_SERVER_URL || "http://localhost:8787";
-const BOT_API_KEY = import.meta.env?.VITE_BOT_API_KEY || "";
 const TELEGRAM_BOT_USERNAME = import.meta.env?.VITE_TELEGRAM_BOT_USERNAME || "Accountantmousebot";
 
-export default function ConnectTelegram() {
+/* Shown only after the business owner agrees to what Telegram involves
+   (legal/legal.js → telegram). Until then, this component never renders,
+   so it cannot contact the bot server. */
+export default function ConnectTelegramGated() {
+  return (
+    <ConsentGate purpose="telegram">
+      <ConnectTelegram />
+    </ConsentGate>
+  );
+}
+
+function ConnectTelegram() {
   const { business } = useLedger();
   const [code, setCode] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
@@ -29,18 +37,17 @@ export default function ConnectTelegram() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${BOT_SERVER_URL}/api/pair/create`, {
+      const res = await botFetch("/api/pair/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-bot-api-key": BOT_API_KEY },
         body: JSON.stringify({ companyId: business.id }),
       });
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
       setCode(data.code);
       setExpiresAt(data.expiresAt);
     } catch (err) {
       console.error("[telegram] pairing error", err);
-      setError("Couldn't generate a code. Try again.");
+      setError(err.message && !err.message.startsWith("Request failed") ? err.message : "Couldn't generate a code. Try again.");
     } finally {
       setLoading(false);
     }

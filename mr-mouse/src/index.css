@@ -20,62 +20,59 @@
 =============================================================== */
 
 @theme {
+  /* ===========================================================
+     HordeMart palette, mapped onto MrMouse's token names.
+
+     MrMouse now wears HordeMart's look (indigo, kola, warm paper)
+     so a seller moving between their store dashboard and MrMouse
+     sees one product family. Every token keeps its old *job* —
+     only the values changed — so no component needed editing:
+
+       action   HordeMart indigo — still the only "you can act on
+                this" colour, and still never a money colour
+       moss     money in  → HordeMart "good" green
+       clay     money out → HordeMart kola
+       chart-*  HordeMart's colour-blind-checked series pair
+
+     Source of truth for the values: HordeMart
+     src/app/styles/tokens.css. KEEP IN SYNC with src/assets/theme.js.
+     =========================================================== */
+
   /* ---- Ground & structure ---------------------------------- */
-  /* One page ground. Replaces four near-identical off-whites
-     (#FAF9F6, #F8F9F7, #F5F6F3, #F4F1EA) that meant surfaces which
-     should have sat on one plane never quite did. */
-  --color-paper: #f7f5ef;
-  --color-paper-sunk: #efece2; /* inset and raised surfaces */
-  --color-rule: #ddd8c9; /* hairlines, table borders, column rules */
+  --color-paper: #fcfcf8; /* HordeMart surface-page */
+  --color-paper-sunk: #f1f2f8; /* surface-2: inset and raised surfaces */
+  --color-rule: #dfe2ee; /* border: hairlines, table borders */
 
   /* ---- Ink ------------------------------------------------- */
-  --color-ink: #1c2118; /* text, dark canvases */
-  --color-ink-soft: #5a6152; /* secondary text at full opacity */
+  --color-ink: #161a33; /* text-primary, dark canvases */
+  --color-ink-soft: #4a4f6a; /* text-secondary */
 
   /* ---- Interactive ----------------------------------------- */
-  /* The only colour that means "you can act on this". Buttons, links,
-     focus rings, selected chips, active nav.
-
-     Deliberately a DIFFERENT green from `moss` below, not the same one:
-     moss is money in, and if a button were moss a primary action would
-     read at a glance like a credit on a ledger screen. This one is much
-     darker and less saturated, so the two never get confused even though
-     both are green. White text on it clears 8:1. */
-  --color-action: #2f5741;
-  --color-action-deep: #23412f; /* hover / active */
-  --color-action-sunk: #e4ebe5; /* tinted surface behind action text */
+  /* HordeMart indigo. White on it is 11:1. A different hue from both
+     money colours, so a button can never read as a credit or debit. */
+  --color-action: #22307a;
+  --color-action-deep: #1a2563; /* hover / active */
+  --color-action-sunk: #dce1f5; /* tinted surface behind action text */
 
   /* ---- Money, on light grounds ----------------------------- */
-  --color-moss: #4f7355; /* in  / debit  / positive */
-  --color-clay: #a8483a; /* out / credit / negative */
+  --color-moss: #12784a; /* in / debit / positive — 5.4:1 on paper */
+  --color-clay: #b4472a; /* out / credit / negative (kola) — 5.2:1 on paper */
 
   /* ---- Money, on the ink canvas ---------------------------- */
-  /* Same meanings, lifted for contrast on dark. Used by the P&L
-     net-profit band and anything else sitting on --color-ink. */
-  --color-moss-lift: #8fb49b;
-  --color-clay-lift: #e19a85;
+  --color-moss-lift: #6fcf9b;
+  --color-clay-lift: #e07a5c;
 
-  /* ---- Chart series ----------------------------------------
-     Charts need a DIFFERENT pair from the money text colours above.
-     In running text, a figure carries a sign and sits in a labelled
-     debit or credit column, so colour is a reinforcement. In a chart
-     the colour IS the identity, and moss vs clay fails for it: the
-     dataviz validator scores that pair at ΔE 4.9 for deuteranopia,
-     below even the 6-8 floor, and moss falls under the chroma floor
-     so it reads grey as a mark.
-
-     This pair was picked by running scripts/validate_palette.js until
-     everything passed: ΔE 10.6 (protan), both above the chroma floor,
-     both over 3:1 on white. Green still means money in; money out
-     moves to gold rather than red, which is what buys the separation. */
-  --color-chart-in: #2e7d4f;
-  --color-chart-out: #c08a2e;
-  --color-chart-grid: #e8e4d8; /* hairline gridlines, recessive */
+  /* ---- Chart series ---------------------------------------- */
+  /* HordeMart's validated pair (separates under deuteranopia and
+     protanopia). Legends still label in/out, so colour is never the
+     only channel. */
+  --color-chart-in: #2a78d6;
+  --color-chart-out: #eb6834;
+  --color-chart-grid: #e4e7f1;
 
   /* ---- Caution --------------------------------------------- */
-  /* Deadlines due today, trial ending. Never used for money. */
-  --color-amber: #c88a3a;
-  --color-amber-deep: #8a5a18; /* text on an amber-tinted surface */
+  --color-amber: #c99a2e; /* HordeMart brass */
+  --color-amber-deep: #8f6200; /* text on an amber-tinted surface */
 }
 
 /* ===============================================================
@@ -94,11 +91,14 @@
 =============================================================== */
 
 .font-display {
-  font-family: 'Syne', 'Trebuchet MS', sans-serif;
-  letter-spacing: -0.015em;
+  /* HordeMart's display face. Wider than Syne, so it is set a touch
+     tighter. */
+  font-family: 'Unbounded', 'Trebuchet MS', sans-serif;
+  letter-spacing: -0.03em;
 }
 .font-body {
-  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* HordeMart's text face. */
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .font-mono {
   font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
@@ -129,43 +129,24 @@
    /assets/... path would 404.
 =============================================================== */
 
-/* Syne — display. One variable file per subset, wght 400-800. Google
-   declares it as separate static faces pointing at the same bytes;
-   declaring the real range exposes every weight between at no extra
-   download. */
+/* Unbounded — display, and Figtree — body: HordeMart's pair, the same
+   self-hosted variable files HordeMart serves (SIL OFL 1.1, licences
+   beside the files). Latin subset; the Naira sign falls back to the
+   system font in running text, as on HordeMart — figures use IBM Plex
+   Mono below, which carries latin-ext and so a real ₦. */
 @font-face {
-  font-family: 'Syne';
+  font-family: 'Unbounded';
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 200 900;
   font-display: swap;
-  src: url('./assets/fonts/syne-var-latin.woff2') format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url('./assets/fonts/unbounded-latin-wght-normal.woff2') format('woff2-variations');
 }
 @font-face {
-  font-family: 'Syne';
+  font-family: 'Figtree';
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 300 900;
   font-display: swap;
-  src: url('./assets/fonts/syne-var-latin-ext.woff2') format('woff2-variations');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-/* IBM Plex Sans — body. Also variable: one file covers 400/500/600. */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url('./assets/fonts/ibm-plex-sans-var-latin.woff2') format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url('./assets/fonts/ibm-plex-sans-var-latin-ext.woff2') format('woff2-variations');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url('./assets/fonts/figtree-latin-wght-normal.woff2') format('woff2-variations');
 }
 
 /* IBM Plex Mono — figures. Static instances, so one file per weight. */

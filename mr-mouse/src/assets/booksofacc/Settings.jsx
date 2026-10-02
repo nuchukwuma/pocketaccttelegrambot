@@ -19,6 +19,7 @@ import { useDevices } from "../useDevices";
 import { ADD_ONS, PLAN_TIERS, companyPriceNaira } from "../planTiers";
 import { useSubscription, computeAccessState } from "../useSubscription";
 import ConnectTelegram from "../components/ConnectTelegram";
+import PrivacySettings from "../legal/PrivacySettings";
 import {
   GlobalStyle,
   TopNav,
@@ -139,6 +140,7 @@ export default function Settings({ onNavigate }) {
         ) : (
           <div className="space-y-5">
             <ConnectTelegram />
+            <PrivacySettings />
             <SupportCard />
           </div>
         )}

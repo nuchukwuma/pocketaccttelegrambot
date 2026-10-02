@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
+import { useConsentPrompt } from "../legal/ConsentGate";
 import { BellRing, FileText, MessageCircle, X } from "lucide-react";
 import { formatMoney } from "../booksofacc/ui";
+import { botFetch } from "../botApi";
 
-const BOT_SERVER_URL = import.meta.env?.VITE_BOT_SERVER_URL || "http://localhost:8787";
-const BOT_API_KEY = import.meta.env?.VITE_BOT_API_KEY || "";
 
 export default function MonthlyStatementPopup({ business, onClose }) {
   const [statement, setStatement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
   const [error, setError] = useState(null);
+  // Statements go out through Telegram: ask before the first one.
+  const telegramConsent = useConsentPrompt("telegram");
 
   useEffect(() => {
     if (!business?.id) return;
@@ -17,10 +19,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
 
     (async () => {
       try {
-        const res = await fetch(
-          `${BOT_SERVER_URL}/api/statements/list?companyId=${encodeURIComponent(business.id)}&limit=1`,
-          { headers: { "x-bot-api-key": BOT_API_KEY } }
-        );
+        const res = await botFetch(`/api/statements/list?companyId=${encodeURIComponent(business.id)}&limit=1`);
         const data = await res.json().catch(() => []);
         if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
         if (!cancelled) setStatement(data?.[0] || null);
@@ -37,10 +36,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
   if (loading || !statement) return null;
 
   async function loadFullStatement() {
-    const res = await fetch(
-      `${BOT_SERVER_URL}/api/statements/${statement.id}?companyId=${encodeURIComponent(business.id)}`,
-      { headers: { "x-bot-api-key": BOT_API_KEY } }
-    );
+    const res = await botFetch(`/api/statements/${statement.id}?companyId=${encodeURIComponent(business.id)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Could not load statement.");
     return data;
@@ -68,12 +64,8 @@ export default function MonthlyStatementPopup({ business, onClose }) {
     setBusy(channel);
     setError(null);
     try {
-      const res = await fetch(`${BOT_SERVER_URL}/api/statements/send`, {
+      const res = await botFetch("/api/statements/send", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-bot-api-key": BOT_API_KEY,
-        },
         body: JSON.stringify({
           companyId: business.id,
           statementId: statement.id,
@@ -91,6 +83,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4">
+      {telegramConsent.prompt}
       <div className="w-full max-w-md rounded-lg bg-white shadow-2xl border border-rule p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -128,7 +121,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
 
           <div className="grid grid-cols-1 gap-2.5">
             <button
-              onClick={() => send("telegram")}
+              onClick={() => telegramConsent.ensure(() => send("telegram"))}
               disabled={Boolean(busy)}
               className="flex items-center justify-center gap-2 rounded-lg border border-rule py-2.5 text-sm text-ink disabled:opacity-50"
             >

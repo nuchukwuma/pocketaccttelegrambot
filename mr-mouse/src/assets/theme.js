@@ -16,12 +16,12 @@
 --------------------------------------------------------------- */
 
 export const COLORS = {
-  ink: "#1C2118", // text, dark canvases
-  inkSoft: "#5A6152", // secondary text
-  action: "#2F5741", // the only interactive colour (a deeper green than moss)
-  moss: "#4F7355", // money in
-  clay: "#A8483A", // money out
-  paper: "#F7F5EF", // the page ground
-  paperSunk: "#EFECE2", // inset / raised surfaces
-  rule: "#DDD8C9", // hairlines
+  ink: "#161A33", // text, dark canvases (HordeMart text-primary)
+  inkSoft: "#4A4F6A", // secondary text
+  action: "#22307A", // the only interactive colour (HordeMart indigo)
+  moss: "#12784A", // money in
+  clay: "#B4472A", // money out (HordeMart kola)
+  paper: "#FCFCF8", // the page ground
+  paperSunk: "#F1F2F8", // inset / raised surfaces
+  rule: "#DFE2EE", // hairlines
 };

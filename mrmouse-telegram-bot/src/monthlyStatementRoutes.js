@@ -9,18 +9,18 @@ import {
 } from "./db.js";
 import { bot } from "./bot.js";
 import { getEvolutionConnection, sendDocument } from "./whatsapp.js";
+import { requireCompanyUser } from "./appAuth.js";
 
 export const monthlyStatementRouter = express.Router();
 
-function requireApiKey(req, res, next) {
-  const key = req.header("x-bot-api-key");
-  if (!key || key !== process.env.BOT_API_KEY) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-  next();
-}
+const requireSignedIn = requireCompanyUser();
+// Sending needs the agreement for the channel it goes out on.
+const requireChannelConsent = requireCompanyUser({
+  consent: (req) => (["telegram", "whatsapp"].includes(req.body?.channel) ? req.body.channel : null),
+});
 
-monthlyStatementRouter.get("/list", requireApiKey, async (req, res) => {
+
+monthlyStatementRouter.get("/list", requireSignedIn, async (req, res) => {
   const { companyId, limit } = req.query;
   if (!companyId) return res.status(400).json({ error: "companyId is required" });
 
@@ -45,7 +45,7 @@ monthlyStatementRouter.get("/list", requireApiKey, async (req, res) => {
   );
 });
 
-monthlyStatementRouter.get("/:id", requireApiKey, async (req, res) => {
+monthlyStatementRouter.get("/:id", requireSignedIn, async (req, res) => {
   const { companyId } = req.query;
   if (!companyId) return res.status(400).json({ error: "companyId is required" });
 
@@ -56,7 +56,7 @@ monthlyStatementRouter.get("/:id", requireApiKey, async (req, res) => {
   res.json(statement);
 });
 
-monthlyStatementRouter.post("/send", requireApiKey, async (req, res) => {
+monthlyStatementRouter.post("/send", requireChannelConsent, async (req, res) => {
   const { companyId, statementId, channel } = req.body || {};
 
   if (!companyId || !statementId || !["telegram", "whatsapp"].includes(channel)) {

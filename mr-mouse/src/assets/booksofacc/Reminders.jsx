@@ -1,5 +1,7 @@
 // Reminders.jsx
 import React, { useState, useMemo, useEffect } from "react";
+import { useConsentPrompt } from "../legal/ConsentGate";
+import { botFetch } from "../botApi";
 import {
   BellRing,
   Users,
@@ -18,8 +20,6 @@ import {
 } from "lucide-react";
 import { useLedger } from "./Ledgercontext";
 import { GlobalStyle, TopNav, PageHeader, SummaryCard, EmptyState, Field, Modal, Pill, formatDate, formatMoney, todayISO } from "./ui";
-const BOT_SERVER_URL = import.meta.env?.VITE_BOT_SERVER_URL || "http://localhost:8787";
-const BOT_API_KEY = import.meta.env?.VITE_BOT_API_KEY || "";
 
 const emptySettle = { name: "", type: "debtor", amount: "", method: "cash" };
 const emptyOrder = { partyName: "", productName: "", quantity: "", type: "sale", expectedBy: "", note: "" };
@@ -182,12 +182,7 @@ export default function Reminders({ onNavigate }) {
 
     (async () => {
       try {
-        const res = await fetch(
-          `${BOT_SERVER_URL}/api/notifications/settings?companyId=${encodeURIComponent(business.id)}`,
-          {
-            headers: { "x-bot-api-key": BOT_API_KEY },
-          }
-        );
+        const res = await botFetch(`/api/notifications/settings?companyId=${encodeURIComponent(business.id)}`);
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
@@ -216,6 +211,8 @@ export default function Reminders({ onNavigate }) {
     };
   }, [business?.id]);
 
+  const telegramConsent = useConsentPrompt("telegram");
+
   const saveNotificationsettings = async (patch) => {
     if (!business?.id) return;
 
@@ -225,12 +222,8 @@ export default function Reminders({ onNavigate }) {
     setNotificationError(null);
 
     try {
-      const res = await fetch(`${BOT_SERVER_URL}/api/notifications/settings`, {
+      const res = await botFetch("/api/notifications/settings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-bot-api-key": BOT_API_KEY,
-        },
         body: JSON.stringify({
           companyId: business.id,
           ...next,
@@ -275,6 +268,7 @@ export default function Reminders({ onNavigate }) {
   return (
     <div className="min-h-screen w-full bg-paper font-body pb-24">
       <GlobalStyle />
+      {telegramConsent.prompt}
       <TopNav business={business} current="reminders" onNavigate={onNavigate} />
       <PageHeader
         business={business}
@@ -308,7 +302,12 @@ export default function Reminders({ onNavigate }) {
                 <input
                   type="checkbox"
                   checked={notificationsettings.telegramEnabled}
-                  onChange={(e) => saveNotificationsettings({ telegramEnabled: e.target.checked })}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    // Switching reminders ON sends them through Telegram: ask first.
+                    if (on) telegramConsent.ensure(() => saveNotificationsettings({ telegramEnabled: true }));
+                    else saveNotificationsettings({ telegramEnabled: false });
+                  }}
                 />
               </label>
             </div>

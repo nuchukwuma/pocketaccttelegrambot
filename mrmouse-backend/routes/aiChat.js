@@ -6,6 +6,20 @@ const {
   cancelPending,
   getAiStatus,
 } = require("../ai/agent");
+const { hasCurrentConsent } = require("../services/consents");
+
+// The app asks before the first question (src/assets/legal/ConsentGate);
+// this is the check that cannot be skipped by calling the API directly.
+async function requireAiConsent(req, res, next) {
+  try {
+    if (await hasCurrentConsent(req.user.id, "ai")) return next();
+    res.status(403).json({
+      text: "Before using the assistant, read and accept how it handles your data (Settings → Privacy).",
+      code: "CONSENT_REQUIRED",
+      purpose: "ai",
+    });
+  } catch (err) { next(err); }
+}
 
 function buildAiChatRouter(io) {
   const router = express.Router();
@@ -23,7 +37,7 @@ function buildAiChatRouter(io) {
     }
   });
 
-  router.post("/chat", async (req, res) => {
+  router.post("/chat", requireAiConsent, async (req, res) => {
     const message = String(req.body?.message || "").trim();
 
     if (!message) {
@@ -72,7 +86,7 @@ function buildAiChatRouter(io) {
     }
   });
 
-  router.post("/chat/confirm", async (req, res) => {
+  router.post("/chat/confirm", requireAiConsent, async (req, res) => {
     try {
       const result = await confirmPending(
         sessionKey(req),

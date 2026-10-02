@@ -30,21 +30,18 @@ import {
 } from "./ledger.js";
 import { fetchBusiness } from "./business.js";
 import { checkFeature } from "./entitlements.js";
+import { requireCompanyUser } from "./appAuth.js";
 
 const SERVER_URL =
   process.env.MAIN_APP_SERVER_URL || "http://localhost:5000";
 
 export const whatsappRouter = express.Router();
 
-function requireApiKey(req, res, next) {
-  const key = req.header("x-bot-api-key");
+// Signed in, and acting for their own business. Sending anything over
+// WhatsApp also needs the WhatsApp agreement.
+const requireSignedIn = requireCompanyUser();
+const requireWhatsAppConsent = requireCompanyUser({ consent: "whatsapp" });
 
-  if (!key || key !== process.env.BOT_API_KEY) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-
-  next();
-}
 
 // Server-side hardstop for every route that actually uses the WhatsApp
 // connection (connect/QR/disconnect/send-*), so it can't be bypassed by
@@ -147,7 +144,7 @@ async function sendToCompany(
 
 // ---------- Per-business Evolution connection ----------
 
-whatsappRouter.post("/connect", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.post("/connect", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
   const { companyId } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -182,7 +179,7 @@ whatsappRouter.post("/connect", requireApiKey, requireWhatsAppEntitlement, async
   }
 });
 
-whatsappRouter.get("/connect/status", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.get("/connect/status", requireSignedIn, requireWhatsAppEntitlement, async (req, res) => {
   const { companyId } = req.query;
 
   if (!companyId || typeof companyId !== "string") {
@@ -213,7 +210,7 @@ whatsappRouter.get("/connect/status", requireApiKey, requireWhatsAppEntitlement,
   }
 });
 
-whatsappRouter.post("/connect/qr", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.post("/connect/qr", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
   const { companyId } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -246,7 +243,7 @@ whatsappRouter.post("/connect/qr", requireApiKey, requireWhatsAppEntitlement, as
   }
 });
 
-whatsappRouter.post("/disconnect", requireApiKey, async (req, res) => {
+whatsappRouter.post("/disconnect", requireSignedIn, async (req, res) => {
   const { companyId } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -263,7 +260,7 @@ whatsappRouter.post("/disconnect", requireApiKey, async (req, res) => {
   }
 });
 
-whatsappRouter.delete("/connection", requireApiKey, async (req, res) => {
+whatsappRouter.delete("/connection", requireSignedIn, async (req, res) => {
   const { companyId } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -282,7 +279,7 @@ whatsappRouter.delete("/connection", requireApiKey, async (req, res) => {
 
 // ---------- Customer/client WhatsApp numbers (not gated — bookkeeping, not usage) ----------
 
-whatsappRouter.get("/clients", requireApiKey, async (req, res) => {
+whatsappRouter.get("/clients", requireSignedIn, async (req, res) => {
   const { companyId } = req.query;
 
   if (!companyId || typeof companyId !== "string") {
@@ -297,7 +294,7 @@ whatsappRouter.get("/clients", requireApiKey, async (req, res) => {
   });
 });
 
-whatsappRouter.post("/clients", requireApiKey, async (req, res) => {
+whatsappRouter.post("/clients", requireWhatsAppConsent, async (req, res) => {
   const { companyId, waNumber, name } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -329,7 +326,7 @@ whatsappRouter.post("/clients", requireApiKey, async (req, res) => {
   }
 });
 
-whatsappRouter.delete("/clients/:waId", requireApiKey, async (req, res) => {
+whatsappRouter.delete("/clients/:waId", requireSignedIn, async (req, res) => {
   const { companyId } = req.body || {};
   const waId = normalizeWaId(req.params.waId);
 
@@ -347,7 +344,7 @@ whatsappRouter.delete("/clients/:waId", requireApiKey, async (req, res) => {
 
 // ---------- Sending documents ----------
 
-whatsappRouter.post("/send-invoice", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.post("/send-invoice", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
   const { companyId, invoice, waNumber } = req.body || {};
 
   if (!companyId || !invoice) {
@@ -385,7 +382,7 @@ whatsappRouter.post("/send-invoice", requireApiKey, requireWhatsAppEntitlement, 
   }
 });
 
-whatsappRouter.post("/send-report", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.post("/send-report", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
   const { companyId, reportType, waNumber } = req.body || {};
 
   if (!companyId || !reportType) {
@@ -462,7 +459,7 @@ whatsappRouter.post("/send-report", requireApiKey, requireWhatsAppEntitlement, a
   }
 });
 
-whatsappRouter.post("/send-file", requireApiKey, requireWhatsAppEntitlement, async (req, res) => {
+whatsappRouter.post("/send-file", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
   const {
     companyId,
     filename,

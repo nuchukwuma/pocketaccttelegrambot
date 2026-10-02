@@ -79,6 +79,10 @@ async function commitMutation(io, businessId, entity, action, record) {
     { upsert: true }
   );
 
+  // A linked HordeMart store hears about the new stock level. Required
+  // here, not at the top: services/hordemartStock.js requires this file.
+  if (entity === "product") require("../services/hordemartStock").noteProductChange(businessId);
+
   return { ok: true, id, payload };
 }
 

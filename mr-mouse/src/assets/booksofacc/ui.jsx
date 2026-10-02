@@ -287,7 +287,7 @@ export function Modal({ title, icon: Icon, onClose, children, wide, dismissOnBac
   return (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm"
-      style={{ background: "rgba(20,24,18,0.82)" }}
+      style={{ background: "rgba(22,26,51,0.82)" }}
       onClick={dismissOnBackdrop ? onClose : undefined}
     >
       <div
