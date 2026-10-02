@@ -19,7 +19,9 @@ import { useDevices } from "../useDevices";
 import { ADD_ONS, PLAN_TIERS, companyPriceNaira } from "../planTiers";
 import { useSubscription, computeAccessState } from "../useSubscription";
 import ConnectTelegram from "../components/ConnectTelegram";
+import ConnectWhatsApp from "../components/ConnectWhatsApp";
 import PrivacySettings from "../legal/PrivacySettings";
+import PasswordSettings from "../account/PasswordSettings";
 import {
   GlobalStyle,
   TopNav,
@@ -73,6 +75,11 @@ export default function Settings({ onNavigate }) {
             <ArrowLeft size={14} /> Back
           </button>
           <EmptyState title="Owner or admin access only" subtitle="Ask an account owner or admin to manage billing, devices, or channels." />
+          {/* Everyone manages their own password and consents. */}
+          <div className="space-y-5 mt-8">
+            <PasswordSettings user={currentUser} />
+            <PrivacySettings />
+          </div>
           <p className="mt-5 text-center text-xs text-ink/50">
             Billing complaints: <a className="underline" href={`mailto:${COMPLAINT_EMAIL}`}>{COMPLAINT_EMAIL}</a>
           </p>
@@ -118,6 +125,7 @@ export default function Settings({ onNavigate }) {
             ["ai", "AI Assistant"],
             ["devices", "Devices"],
             ["connect", "Connect"],
+            ["account", "Your account"],
           ].map(([key, label]) => (
             <button
               key={key}
@@ -137,10 +145,15 @@ export default function Settings({ onNavigate }) {
           <AiTab companyId={business?.id} />
         ) : tab === "devices" ? (
           <DevicesTab businessId={business?.id} />
+        ) : tab === "account" ? (
+          <div className="space-y-5">
+            <PasswordSettings user={currentUser} />
+            <PrivacySettings />
+          </div>
         ) : (
           <div className="space-y-5">
             <ConnectTelegram />
-            <PrivacySettings />
+            <ConnectWhatsApp />
             <SupportCard />
           </div>
         )}

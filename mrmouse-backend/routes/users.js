@@ -13,7 +13,7 @@ const {
   createBusinessWithOwner,
   issueSession,
 } = require("../services/accounts");
-const { signupSchema, loginSchema, inviteSchema, userPatchSchema, parseBody } = require("../validation/schemas");
+const { signupSchema, loginSchema, inviteSchema, userPatchSchema, passwordChangeSchema, parseBody } = require("../validation/schemas");
 
 function buildUsersRouter(io) {
   const router = express.Router();
@@ -84,6 +84,27 @@ function buildUsersRouter(io) {
 
   router.get("/me", requireAuth, async (req, res) => {
     res.json({ ok: true, user: sanitize(req.user) });
+  });
+
+  // Set or change your own password. Changing needs the current one, so a
+  // borrowed session cannot lock the owner out; an account created from
+  // HordeMart has none yet, so its first password needs only the session.
+  router.post("/me/password", requireAuth, requireSameOrigin, limits.loginByIp, async (req, res, next) => {
+    try {
+      const body = parseBody(passwordChangeSchema, req, res);
+      if (!body) return;
+      const user = await User.findOne({ id: req.user.id }).select("+passwordHash");
+      if (!user) return res.status(401).json({ error: "Session is no longer valid" });
+      if (user.passwordSet !== false) {
+        const ok = body.currentPassword && (await bcrypt.compare(body.currentPassword, user.passwordHash));
+        if (!ok) return res.status(403).json({ error: "Your current password is not right", field: "currentPassword" });
+      }
+      user.passwordHash = await hashPassword(body.newPassword);
+      user.passwordSet = true;
+      user.updatedAt = new Date();
+      await user.save();
+      res.json({ ok: true, user: sanitize(user) });
+    } catch (err) { next(err); }
   });
 
   router.post("/logout", requireSameOrigin, async (_req, res) => {

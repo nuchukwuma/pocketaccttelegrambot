@@ -53,6 +53,13 @@ const userPatchSchema = z.object({
   password: password.optional(),
 });
 
+// currentPassword is required unless the account has never had one
+// (created from HordeMart) — the route decides.
+const passwordChangeSchema = z.object({
+  currentPassword: z.string().max(200).optional(),
+  newPassword: password,
+});
+
 const consentSchema = z.object({
   purpose: z.enum(PURPOSES),
   version: z.string().max(40),
@@ -105,6 +112,7 @@ module.exports = {
   loginSchema,
   inviteSchema,
   userPatchSchema,
+  passwordChangeSchema,
   consentSchema,
   ssoExchangeSchema,
   ssoConfirmSchema,

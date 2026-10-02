@@ -147,6 +147,7 @@ function buildHordeMartSsoRouter({ ssoSecret = () => process.env.HORDEMART_SSO_S
           email: claims.email.toLowerCase().trim(),
           name: String(claims.name || claims.email.split("@")[0]).trim().slice(0, 120),
           passwordHash: await unusablePasswordHash(),
+          passwordSet: false,
           business: { businessName: String(claims.site.name || "My business").trim().slice(0, 200) },
         }));
       }

@@ -198,6 +198,30 @@ describe("Mr Mouse backend", { skip: skipWithoutDb }, () => {
       assert.equal(await models.User.countDocuments(), 0);
     });
 
+    test("an account made from HordeMart can choose a password, then sign in with it anywhere", async () => {
+      const first = await api.call("POST", "/api/integrations/hordemart/sso", { body: { token: signPass().token } });
+      const { token, user } = (await linkFor({ ticket: first.data.ticket })).data;
+      assert.equal(user.passwordSet, false);
+      assert.equal((await api.call("POST", "/api/users/me/password", { token, body: { newPassword: "short" } })).status, 400);
+
+      const set = await api.call("POST", "/api/users/me/password", { token, body: { newPassword: "a-long-new-password" } });
+      assert.equal(set.status, 200, JSON.stringify(set.data));
+      assert.equal(set.data.user.passwordSet, true);
+      const login = await api.call("POST", "/api/users/login", { body: { email: "ade@example.com", password: "a-long-new-password" } });
+      assert.equal(login.status, 200);
+
+      // From now on, changing it needs the current one.
+      const noCurrent = await api.call("POST", "/api/users/me/password", { token, body: { newPassword: "another-long-password" } });
+      assert.equal(noCurrent.status, 403);
+      const wrong = await api.call("POST", "/api/users/me/password", { token, body: { currentPassword: "nope", newPassword: "another-long-password" } });
+      assert.equal(wrong.status, 403);
+      const right = await api.call("POST", "/api/users/me/password", {
+        token,
+        body: { currentPassword: "a-long-new-password", newPassword: "another-long-password" },
+      });
+      assert.equal(right.status, 200);
+    });
+
     test("withdrawing the HordeMart consent unlinks; the next visit asks again", async () => {
       const first = await api.call("POST", "/api/integrations/hordemart/sso", { body: { token: signPass().token } });
       const { token } = (await linkFor({ ticket: first.data.ticket })).data;

@@ -20,7 +20,7 @@ import {
 import mrMouseImg from "./background images/mrmouse1.png";
 import { useAuth } from "./useAuth";
 import { PLAN_TIERS } from "./planTiers";
-import { GlobalStyle } from "./booksofacc/ui";
+import { GlobalStyle, linkLabel } from "./booksofacc/ui";
 import ConsentCheckbox from "./legal/ConsentCheckbox";
 import LegalModal from "./legal/LegalModal";
 import { CONSENTS } from "./legal/legal";
@@ -296,7 +296,7 @@ export default function LoginPage({ onAuthenticated }) {
                         <input
                           type={showPassword ? "text" : "password"}
                           className="ledger-input w-full py-1.5 text-sm"
-                          placeholder="At least 6 characters"
+                          placeholder="At least 12 characters"
                           value={signup.password}
                           onChange={(e) => setSignupField("password", e.target.value)}
                         />
@@ -456,14 +456,15 @@ export default function LoginPage({ onAuthenticated }) {
 }
 
 function Field({ icon: Icon, label, error, action, children }) {
+  const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
-      <label className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+      <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
         <Icon size={11} />
         {label}
       </label>
       <div className="flex items-center gap-2">
-        <div className="flex-1">{children}</div>
+        <div className="flex-1">{control}</div>
         {action}
       </div>
       {error && <p className="font-body text-xs text-clay mt-1">{error}</p>}
@@ -472,16 +473,17 @@ function Field({ icon: Icon, label, error, action, children }) {
 }
 
 function EntryField({ icon: Icon, label, error, optional, children }) {
+  const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+          <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
             <Icon size={11} />
             {label}
             {optional && <span className="normal-case text-ink/30">(optional)</span>}
           </label>
-          {children}
+          {control}
           {error && <p className="font-body text-xs text-clay mt-1">{error}</p>}
         </div>
       </div>

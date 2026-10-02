@@ -21,12 +21,12 @@ function hashPassword(password) {
 }
 
 // A password nobody knows, for accounts created from HordeMart: they sign
-// in from HordeMart until they set one in Settings.
+// in from HordeMart until they choose one in Settings → Your account.
 function unusablePasswordHash() {
   return hashPassword(crypto.randomBytes(32).toString("base64url"));
 }
 
-async function createBusinessWithOwner({ email, name, passwordHash, business }) {
+async function createBusinessWithOwner({ email, name, passwordHash, business, passwordSet = true }) {
   const businessId = crypto.randomUUID();
   const now = new Date();
   await Business.create({
@@ -54,6 +54,7 @@ async function createBusinessWithOwner({ email, name, passwordHash, business }) 
     email,
     name,
     passwordHash,
+    passwordSet,
     businessId,
     role: "owner",
   });

@@ -211,16 +211,28 @@ export function PageHeader({ business, icon: Icon, title, subtitle, right }) {
    Shared primitives
 --------------------------------------------------------------- */
 
+/* Point a field's <label> at its own input/select/textarea, so screen
+   readers announce the field's name. Children that are not a single form
+   control (a custom picker, say) are left as they are. */
+export function linkLabel(children, generatedId) {
+  if (React.isValidElement(children) && ["input", "select", "textarea"].includes(children.type)) {
+    const id = children.props.id || generatedId;
+    return { htmlFor: id, control: children.props.id ? children : React.cloneElement(children, { id }) };
+  }
+  return { htmlFor: undefined, control: children };
+}
+
 export function Field({ icon: Icon, label, error, optional, action, children }) {
+  const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
-      <label className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1.5">
+      <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1.5">
         {Icon && <Icon size={13} />}
         {label}
         {optional && <span className="text-ink/35">(optional)</span>}
       </label>
       <div className="flex items-center gap-2">
-        <div className="flex-1">{children}</div>
+        <div className="flex-1">{control}</div>
         {action}
       </div>
       {error && <p className="font-body text-xs text-clay mt-1">{error}</p>}
