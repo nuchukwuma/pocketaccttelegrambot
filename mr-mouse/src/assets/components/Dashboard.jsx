@@ -634,7 +634,7 @@ function QuickLearningModal({ tips, businessId }) {
                 onClick={() => goTo(i)}
                 aria-label={`Go to tip ${i + 1}`}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-5 bg-moss" : "w-1.5 bg-ink/15 hover:bg-ink/30"
+                  i === index ? "w-5 bg-action" : "w-1.5 bg-ink/15 hover:bg-ink/30"
                 }`}
               />
             ))}

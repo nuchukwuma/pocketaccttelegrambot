@@ -7,7 +7,9 @@ import {
   createPairingCode,
   getNotificationsettings,
   saveNotificationsettings,
+  unlinkChatsForCompany,
 } from "./db.js";
+import { requireCompanyUser } from "./appAuth.js";
 import { whatsappRouter } from "./whatsappRoutes.js";
 import { monthlyStatementRouter } from "./monthlyStatementRoutes.js";
 
@@ -40,20 +42,11 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
-function requireApiKey(req, res, next) {
-  const key = req.header("x-bot-api-key");
-
-  if (!key || key !== process.env.BOT_API_KEY) {
-    return res.status(401).json({ error: "unauthorized" });
-  }
-
-  next();
-}
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 // Telegram pairing endpoint.
-app.post("/api/pair/create", requireApiKey, async (req, res) => {
+app.post("/api/pair/create", requireCompanyUser({ consent: "telegram" }), async (req, res) => {
   const { companyId } = req.body || {};
 
   if (!companyId || typeof companyId !== "string") {
@@ -90,7 +83,7 @@ app.post("/api/pair/create", requireApiKey, async (req, res) => {
 });
 
 // Notification settings Endpoints
-app.get("/api/notifications/settings", requireApiKey, async (req, res) => {
+app.get("/api/notifications/settings", requireCompanyUser(), async (req, res) => {
   const { companyId } = req.query;
 
   if (!companyId) {
@@ -108,7 +101,12 @@ app.get("/api/notifications/settings", requireApiKey, async (req, res) => {
   }
 });
 
-app.post("/api/notifications/settings", requireApiKey, async (req, res) => {
+// Switching Telegram reminders on needs the Telegram agreement; switching off never does.
+const requireTelegramIfEnabling = requireCompanyUser({
+  consent: (req) => (req.body?.telegramEnabled === true ? "telegram" : null),
+});
+
+app.post("/api/notifications/settings", requireTelegramIfEnabling, async (req, res) => {
   const { companyId, ...settings } = req.body || {};
 
   if (!companyId) {
@@ -123,6 +121,18 @@ app.post("/api/notifications/settings", requireApiKey, async (req, res) => {
     res.status(500).json({
       error: err.message || "Could not save notification settings.",
     });
+  }
+});
+
+// Withdrawing the Telegram agreement (Settings → Privacy) unlinks every
+// Telegram chat of the business, so nothing more is sent there.
+app.post("/api/telegram/unlink", requireCompanyUser(), async (req, res) => {
+  try {
+    await unlinkChatsForCompany(req.body.companyId);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[telegram] unlink failed", err?.message);
+    res.status(500).json({ error: "Could not unlink Telegram. Try again." });
   }
 });
 

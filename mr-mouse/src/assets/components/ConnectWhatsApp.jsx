@@ -1,21 +1,12 @@
 import React, { useEffect, useState } from "react";
+import ConsentGate from "../legal/ConsentGate";
 import { MessageSquare, Check, RefreshCw, Trash2 } from "lucide-react";
 import { useLedger } from "../booksofacc/Ledgercontext";
+import { botFetch } from "../botApi";
 
-const BOT_SERVER_URL =
-  import.meta.env?.VITE_BOT_SERVER_URL || "http://localhost:8787";
-const BOT_API_KEY = import.meta.env?.VITE_BOT_API_KEY || "";
 
 async function apiFetch(path, options = {}) {
-  const res = await fetch(`${BOT_SERVER_URL}${path}`, {
-    ...options,
-    credentials: "include", // Sends session auth cookies across origins
-    headers: {
-      "Content-Type": "application/json",
-      "x-bot-api-key": BOT_API_KEY,
-      ...(options.headers || {}),
-    },
-  });
+  const res = await botFetch(path, options);
 
   const data = await res.json().catch(() => ({}));
 
@@ -26,7 +17,18 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
-export default function ConnectWhatsApp() {
+/* Shown only after the business owner agrees to what WhatsApp involves
+   (legal/legal.js → whatsapp). Until then, this component never renders,
+   so it cannot contact the bot server. */
+export default function ConnectWhatsAppGated() {
+  return (
+    <ConsentGate purpose="whatsapp">
+      <ConnectWhatsApp />
+    </ConsentGate>
+  );
+}
+
+function ConnectWhatsApp() {
   const { business } = useLedger();
 
   const [qr, setQr] = useState(null);

@@ -10,6 +10,9 @@ const UserSchema = new Schema(
     passwordHash: { type: String, required: true, select: false },
     businessId: { type: String, required: true, index: true },
     role: { type: String, enum: ["owner", "admin", "staff", "accountant"], default: "staff" },
+    // False for accounts created by signing in from HordeMart: they have no
+    // password until they choose one (POST /api/users/me/password).
+    passwordSet: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },

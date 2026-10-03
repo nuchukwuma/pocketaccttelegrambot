@@ -1,5 +1,6 @@
 // Ledgercontext.jsx
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from "react";
+import { resetConsentCache } from "../legal/useConsents";
 import { uid, todayISO } from "./ui.jsx";
 import { useCompanySync } from "../components/useCompanySync";
 import { getAuthHeaders, clearAuthToken } from "../auth";
@@ -78,6 +79,7 @@ export function LedgerProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    resetConsentCache();
     setCurrentUser(null);
     localStorage.removeItem("ledger_user");
     try {

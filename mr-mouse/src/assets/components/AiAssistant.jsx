@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { ConsentCard } from "../legal/ConsentGate";
+import { useConsents } from "../legal/useConsents";
 import { useLedger } from "../booksofacc/Ledgercontext";
 import { useSubscription } from "../useSubscription";
 import { getAuthHeaders } from "../auth";
@@ -16,6 +18,9 @@ export default function AiAssistant({ onNavigate }) {
   );
 
   const [open, setOpen] = useState(false);
+  // Nothing is sent to an AI provider until the owner agrees (legal/legal.js → ai).
+  const { has: hasConsent } = useConsents();
+  const aiAllowed = hasConsent("ai");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,6 +38,7 @@ export default function AiAssistant({ onNavigate }) {
   if (!business) return null;
 
   async function send(text) {
+    if (!aiAllowed) return; // belt and braces: the panel is not shown either
     const cleanText = String(text || "").trim();
 
     if (!cleanText || busy || pendingConfirm) {
@@ -123,7 +129,7 @@ export default function AiAssistant({ onNavigate }) {
   }
 
   async function respondToConfirm(confirmed) {
-    if (busy) return;
+    if (busy || !aiAllowed) return;
 
     setBusy(true);
 
@@ -215,7 +221,13 @@ export default function AiAssistant({ onNavigate }) {
         {open ? "✕" : "💬"}
       </button>
 
-      {open && (
+      {open && !aiAllowed && (
+        <div className="fixed bottom-24 right-4 left-4 z-50 w-auto max-w-sm mx-auto sm:left-auto sm:mx-0 sm:w-[92vw] max-h-[70vh] overflow-y-auto rounded-2xl shadow-2xl">
+          <ConsentCard purpose="ai" compact />
+        </div>
+      )}
+
+      {open && aiAllowed && (
         <div className="fixed bottom-24 right-4 left-4 z-50 w-auto max-w-sm mx-auto sm:left-auto sm:mx-0 sm:w-[92vw] h-[65vh] bg-white rounded-2xl shadow-2xl border border-black/10 flex flex-col overflow-hidden">
 
           {/* Header */}

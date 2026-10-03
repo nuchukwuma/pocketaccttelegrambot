@@ -21,6 +21,8 @@ import BillingReminderBanner from "./assets/booksofacc/BillingReminderBanner";
 import AiAssistant from "./assets/components/AiAssistant";
 import SplashScreen from "./assets/components/SplashScreen";
 import { useSubscription, computeAccessState } from "./assets/useSubscription";
+import HordeMartLink, { isHordeMartLanding } from "./assets/integrations/HordeMartLink";
+import TermsGate from "./assets/legal/TermsGate";
 
 const BOOK_PAGES = {
   cashbook: CashBook,
@@ -34,7 +36,9 @@ const BOOK_PAGES = {
 };
 
 function AppShell() {
-  const { business, setBusiness, authReady } = useLedger();
+  const { business, setBusiness, authReady, logout } = useLedger();
+  // "Open MrMouse" from a HordeMart store dashboard lands here (web only).
+  const [hordeMartLanding, setHordeMartLanding] = useState(isHordeMartLanding);
   const { subscription, verify } = useSubscription(business?.id);
   const accessState = computeAccessState(subscription);
   const blocked = accessState === "blocked";
@@ -88,6 +92,20 @@ function AppShell() {
     }
   }, [blocked, page]);
 
+  if (hordeMartLanding) {
+    return (
+      <HordeMartLink
+        onSignedIn={(user) => {
+          setBusiness(user);
+          setPage("dashboard");
+          setSplashDone(true);
+          setHordeMartLanding(false);
+        }}
+        onCancel={() => setHordeMartLanding(false)}
+      />
+    );
+  }
+
   if (!splashDone) {
     return (
       <SplashScreen
@@ -109,6 +127,7 @@ function AppShell() {
   }
 
   return (
+    <TermsGate onSignOut={logout}>
     <RequireOnline>
       <RequireDeviceSlot>
         <BillingReminderBanner onOpenBilling={() => onNavigate("settings")} />
@@ -139,6 +158,7 @@ function AppShell() {
         )}
       </RequireDeviceSlot>
     </RequireOnline>
+    </TermsGate>
   );
 }
 

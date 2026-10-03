@@ -1,6 +1,7 @@
 // useAuth.js
 import { useCallback, useState } from "react";
 import { getAuthHeaders, clearAuthToken } from "./auth";
+import { resetConsentCache } from "./legal/useConsents";
 
 const SERVER_URL = import.meta.env?.VITE_SYNC_SERVER_URL || "http://localhost:5000";
 
@@ -13,13 +14,17 @@ async function parse(res) {
 function storeToken(data) {
   if (data?.token) {
     localStorage.setItem("token", data.token);
+    // Remembered so the next visit opens on "Sign in", not "Set up your business".
+    localStorage.setItem("mm-has-signed-in", "1");
+    // A new session: consents are fetched again for this person.
+    resetConsentCache();
   }
 }
 
 export function useAuth() {
   const [error, setError] = useState(null);
 
-  const signupNewCompany = useCallback(async ({ email, name, password, businessName, cac, location, contact, industry, plan }) => {
+  const signupNewCompany = useCallback(async ({ email, name, password, businessName, cac, location, contact, industry, plan, acceptTerms, termsVersion }) => {
     setError(null);
     try {
       const res = await fetch(`${SERVER_URL}/api/users`, {
@@ -37,6 +42,10 @@ export function useAuth() {
             industry,
           },
           ...(plan ? { plan } : {}),
+          // The backend refuses a signup without these, and records which
+          // version was accepted and when.
+          acceptTerms,
+          termsVersion,
         }),
       });
       const data = await parse(res);

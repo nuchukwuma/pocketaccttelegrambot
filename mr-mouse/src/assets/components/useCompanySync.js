@@ -157,12 +157,15 @@ export function useCompanySync(companyId) {
   // -> socket rebuilt -> reconnects -> syncs again -> repeat. Reading through
   // a ref keeps this function's identity stable across the whole session.
   const requestStateFromPeers = useCallback(async () => {
-    if (!companyId || !socketRef.current) return;
+    const socket = socketRef.current;
+    if (!companyId || !socket) return;
     const meta = await db.table("meta").get(metaKey);
     const since = lastSyncedAtRef.current || meta?.value || null;
+    // Signed out (or reconnected) while reading: that socket is gone.
+    if (socketRef.current !== socket) return;
 
     setPeersRespondedThisSync(0);
-    socketRef.current.emit("REQUEST_STATE", { companyId, since });
+    socket.emit("REQUEST_STATE", { companyId, since });
 
     // Give peers a window to answer; whichever come back get applied as
     // they arrive (see the STATE_OFFERED listener below). After the window,
@@ -178,10 +181,14 @@ export function useCompanySync(companyId) {
 
   // ---- Flush mutations queued while offline, now over the socket -------------
   const flushOutbox = useCallback(async () => {
-    if (!companyId || !socketRef.current) return;
+    const socket = socketRef.current;
+    if (!companyId || !socket) return;
     const pending = await getPendingOutbox(companyId);
     for (const item of pending) {
-      socketRef.current.emit("SYNC_MUTATE", {
+      // Disconnected or signed out part-way: stop, and leave the rest
+      // queued for the next connection rather than dropping them.
+      if (socketRef.current !== socket || !socket.connected) return;
+      socket.emit("SYNC_MUTATE", {
         companyId: item.companyId,
         entity: item.entity,
         action: item.action,

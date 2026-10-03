@@ -17,6 +17,10 @@ const SyncEvent = require("./models/SyncEvent");
 const EntitySnapshot = require("./models/EntitySnapshot");
 const BusinessBackup = require("./models/BusinessBackup");
 const { durableWrite } = require("./services/durableWrite");
+const buildConsentsRouter = require("./routes/consents");
+const { buildHordeMartSsoRouter, buildHordeMartSalesRouter } = require("./routes/hordemart");
+const { noteProductChange } = require("./services/hordemartStock");
+const { limits } = require("./lib/rateLimit");
 
 // Mirrors ENTITY_TABLE in the frontend's useCompanySync.js and the
 // equivalent mapping in the bot's socketPeer.js — same pluralization, so a
@@ -68,18 +72,29 @@ async function start() {
   }
 
   const app = express();
+  // Behind a hosting proxy, req.ip is the proxy's address unless told how
+  // many hops to trust — and the sign-in rate limits count by req.ip.
+  // e.g. TRUST_PROXY=1 on Render/Railway/Heroku.
+  if (process.env.TRUST_PROXY) {
+    const hops = Number(process.env.TRUST_PROXY);
+    app.set("trust proxy", Number.isInteger(hops) ? hops : process.env.TRUST_PROXY);
+  }
   app.use(cors(corsOptions));
 
   // Paystack webhook must see the exact raw payload for HMAC-SHA512 verification.
   app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
 
-  // All ordinary JSON routes can use the normal parser.
-  app.use(express.json({ limit: "2mb" }));
-
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: corsOptions,
   });
+
+  // HordeMart sale messages are signed over their exact bytes too, so this
+  // route reads its own raw body — before the JSON parser below.
+  app.use("/integrations/hordemart/sales", buildHordeMartSalesRouter(io));
+
+  // All ordinary JSON routes can use the normal parser.
+  app.use(express.json({ limit: "2mb" }));
 
   // Socket authentication
   io.use(async (socket, next) => {
@@ -143,6 +158,7 @@ async function start() {
     socket.on("SYNC_MUTATE", ({ companyId, entity, action, id, payload }) => {
       if (companyId !== socket.data.businessId || socket.data.joinedCompanyId !== socket.data.businessId) return;
       if (!entity || !action || !id) return;
+      if (entity === "product") noteProductChange(socket.data.businessId);
 
       io.to(`company_${socket.data.businessId}`).except(socket.id).emit("SYNC_EVENT", {
         entity, action, payload,
@@ -297,13 +313,20 @@ async function start() {
   app.use("/api/sync", requireAuthOrBot, requireSameOrigin, syncRouter);
   app.use("/api/users", buildUsersRouter(io));
   app.use("/api/devices", requireAuthOrBot, requireSameOrigin, buildDevicesRouter(io));
+  app.use(["/api/billing/initialize", "/api/billing/addon/initialize", "/api/billing/verify"], limits.payment);
   app.use("/api/billing", billingRouter);
   app.use("/api/ai", requireAuth, requireSameOrigin, buildAiChatRouter(io));
+  app.use("/api/consents", requireAuth, requireSameOrigin, buildConsentsRouter());
+  app.use("/api/integrations/hordemart", requireSameOrigin, buildHordeMartSsoRouter());
 
   app.use((err, _req, res, _next) => {
-    console.error(err);
-    res.status(err.status || 500).json({
-      error: err.message || "Internal server error",
+    const status = err.status || err.statusCode || 500;
+    // Never log the error object whole: a body-parser error carries the raw
+    // request body, which for a sign-in is the password.
+    console.error(`[error] ${status} ${err.name || "Error"}: ${err.message || ""}`, status >= 500 ? err.stack : "");
+    res.status(status).json({
+      // Internal detail stays in the log; 5xx answers say nothing about it.
+      error: status >= 500 ? "Internal server error" : err.expose === false ? "Request failed" : err.message || "Request failed",
     });
   });
 

@@ -20,7 +20,10 @@ import {
 import mrMouseImg from "./background images/mrmouse1.png";
 import { useAuth } from "./useAuth";
 import { PLAN_TIERS } from "./planTiers";
-import { GlobalStyle } from "./booksofacc/ui";
+import { GlobalStyle, linkLabel } from "./booksofacc/ui";
+import ConsentCheckbox from "./legal/ConsentCheckbox";
+import LegalModal from "./legal/LegalModal";
+import { CONSENTS } from "./legal/legal";
 
 const INDUSTRIES = [
   "Retail & trade",
@@ -58,7 +61,15 @@ const emptySignin = { email: "", password: "" };
 export default function LoginPage({ onAuthenticated }) {
   const { signupNewCompany, login } = useAuth();
 
-  const [mode, setMode] = useState("signup");
+  // Someone who has signed in on this device before is most likely coming
+  // back, not opening a second business.
+  const [mode, setMode] = useState(() => {
+    try {
+      return localStorage.getItem("mm-has-signed-in") ? "signin" : "signup";
+    } catch {
+      return "signup";
+    }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("idle");
   const [errors, setErrors] = useState({});
@@ -66,6 +77,8 @@ export default function LoginPage({ onAuthenticated }) {
 
   const [signup, setSignup] = useState(emptySignup);
   const [signin, setSignin] = useState(emptySignin);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [doc, setDoc] = useState(null);
 
   const setSignupField = (key, value) => {
     setSignup((s) => ({ ...s, [key]: value }));
@@ -85,7 +98,8 @@ export default function LoginPage({ onAuthenticated }) {
       if (!signup.contact.trim()) next.contact = "Enter a contact number";
       if (!signup.industry) next.industry = "Select an industry";
       if (!signup.email.trim()) next.email = "Enter an email address";
-      if (!signup.password || signup.password.length < 6) next.password = "Use at least 6 characters";
+      if (!signup.password || signup.password.length < 12) next.password = "Use at least 12 characters — a short sentence works well";
+      if (!acceptTerms) next.acceptTerms = "Tick the box to accept the Terms and Privacy Policy";
       if (signup.planTier === "company" && (!signup.companySeats || signup.companySeats < 1))
         next.companySeats = "Enter at least 1 seat";
     } else {
@@ -120,6 +134,8 @@ export default function LoginPage({ onAuthenticated }) {
           contact: signup.contact,
           industry: signup.industry,
           plan,
+          acceptTerms: true,
+          termsVersion: CONSENTS.terms.version,
         });
         user = result.user; // role: "owner" — first user of a new company always is
       } else {
@@ -164,7 +180,7 @@ export default function LoginPage({ onAuthenticated }) {
           <div>
             <div className="flex items-center gap-2 mb-8">
               <div className="w-7 h-7 rounded-full border border-ink/25 bg-paper flex items-center justify-center">
-                <div className="w-1.5 h-1.5 rounded-full bg-moss" />
+                <div className="w-1.5 h-1.5 rounded-full bg-action" />
               </div>
               <span className="font-display text-base font-semibold text-ink">Mr Mouse</span>
             </div>
@@ -288,7 +304,7 @@ export default function LoginPage({ onAuthenticated }) {
                         <input
                           type={showPassword ? "text" : "password"}
                           className="ledger-input w-full py-1.5 text-sm"
-                          placeholder="At least 6 characters"
+                          placeholder="At least 12 characters"
                           value={signup.password}
                           onChange={(e) => setSignupField("password", e.target.value)}
                         />
@@ -379,11 +395,30 @@ export default function LoginPage({ onAuthenticated }) {
                     </div>
                   )}
 
+                  {mode === "signup" && (
+                    <div className="mt-6">
+                      <ConsentCheckbox id="signup-terms" checked={acceptTerms} onChange={(v) => { setAcceptTerms(v); if (errors.acceptTerms) setErrors((e) => ({ ...e, acceptTerms: undefined })); }}>
+                        I have read and agree to the Mr Mouse{" "}
+                        <button type="button" className="underline text-action" onClick={() => setDoc("terms")}>
+                          Terms of Service
+                        </button>{" "}
+                        and{" "}
+                        <button type="button" className="underline text-action" onClick={() => setDoc("privacy")}>
+                          Privacy Policy
+                        </button>
+                        .
+                      </ConsentCheckbox>
+                      {errors.acceptTerms && (
+                        <p role="alert" className="mt-2 font-body text-[12px] text-clay">{errors.acceptTerms}</p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
                     <button
                       type="submit"
-                      disabled={status === "submitting"}
-                      className="w-full flex-1 flex items-center justify-center gap-2 rounded-xl bg-moss text-white font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-70"
+                      disabled={status === "submitting" || (mode === "signup" && !acceptTerms)}
+                      className="w-full flex-1 flex items-center justify-center gap-2 rounded-xl bg-action text-white font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-70"
                     >
                       {status === "submitting" ? (
                         <>
@@ -411,9 +446,12 @@ export default function LoginPage({ onAuthenticated }) {
             )}
           </div>
 
-          <p className="font-body text-[11px] text-ink/40 mt-6">
-            By logging in, you agree to our terms and privacy policy.
+          <p className="font-body text-[11px] text-ink/50 mt-6">
+            <button type="button" className="underline" onClick={() => setDoc("terms")}>Terms of Service</button>
+            {" · "}
+            <button type="button" className="underline" onClick={() => setDoc("privacy")}>Privacy Policy</button>
           </p>
+          <LegalModal doc={doc} onClose={() => setDoc(null)} />
         </div>
 
         <div className="lg:col-span-6 xl:col-span-6 relative bg-ink hidden lg:block overflow-hidden">
@@ -426,14 +464,15 @@ export default function LoginPage({ onAuthenticated }) {
 }
 
 function Field({ icon: Icon, label, error, action, children }) {
+  const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
-      <label className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+      <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
         <Icon size={11} />
         {label}
       </label>
       <div className="flex items-center gap-2">
-        <div className="flex-1">{children}</div>
+        <div className="flex-1">{control}</div>
         {action}
       </div>
       {error && <p className="font-body text-xs text-clay mt-1">{error}</p>}
@@ -442,16 +481,17 @@ function Field({ icon: Icon, label, error, action, children }) {
 }
 
 function EntryField({ icon: Icon, label, error, optional, children }) {
+  const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+          <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
             <Icon size={11} />
             {label}
             {optional && <span className="normal-case text-ink/30">(optional)</span>}
           </label>
-          {children}
+          {control}
           {error && <p className="font-body text-xs text-clay mt-1">{error}</p>}
         </div>
       </div>
@@ -465,10 +505,10 @@ function PlanOption({ icon: Icon, label, sub, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center gap-1 rounded-lg border-2 py-3 transition-all ${
-        active ? "border-moss bg-moss/8" : "border-rule bg-white"
+        active ? "border-action bg-action-sunk" : "border-rule bg-white"
       }`}
     >
-      <Icon size={16} className={active ? "text-moss" : "text-ink/50"} />
+      <Icon size={16} className={active ? "text-action" : "text-ink/50"} />
       <span className={`font-body text-xs font-medium ${active ? "text-ink" : "text-ink/60"}`}>{label}</span>
       <span className="font-mono text-[10px] text-ink/40">{sub}</span>
     </button>

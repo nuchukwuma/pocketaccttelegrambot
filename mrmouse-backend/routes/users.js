@@ -3,16 +3,17 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const User = require("../models/User");
-const Business = require("../models/Business");
-const { ensureSubscription } = require("../services/subscriptionStore");
-const { requireAuth, requireOwnerOrAdmin, requireSameOrigin, setSessionCookie, clearSessionCookie, createToken } = require("../auth");
-
-const SALT_ROUNDS = 10;
-
-function sanitize(userDoc) {
-  const { passwordHash, _id, __v, ...rest } = userDoc.toObject ? userDoc.toObject() : userDoc;
-  return rest;
-}
+const { requireAuth, requireOwnerOrAdmin, requireSameOrigin, clearSessionCookie } = require("../auth");
+const { CONSENT_VERSIONS } = require("../legal/versions");
+const { limits } = require("../lib/rateLimit");
+const { recordConsent, requestMeta } = require("../services/consents");
+const {
+  sanitizeUser: sanitize,
+  hashPassword,
+  createBusinessWithOwner,
+  issueSession,
+} = require("../services/accounts");
+const { signupSchema, loginSchema, inviteSchema, userPatchSchema, passwordChangeSchema, parseBody } = require("../validation/schemas");
 
 function buildUsersRouter(io) {
   const router = express.Router();
@@ -21,73 +22,38 @@ function buildUsersRouter(io) {
     io.to(`company_${businessId}`).emit("USER_EVENT", { action, user });
   }
 
-  // Public endpoint: creates a brand-new business and owner only.
-  router.post("/", requireSameOrigin, async (req, res, next) => {
+  // Public endpoint: creates a brand-new business and owner only. The
+  // person must tick the Terms box; the server records which version.
+  router.post("/", requireSameOrigin, limits.signup, async (req, res, next) => {
     try {
-      const { email, name, password, business } = req.body;
-      if (!email || !name || !password) {
-        return res.status(400).json({ error: "email, name, password are required" });
-      }
+      const body = parseBody(signupSchema, req, res);
+      if (!body) return;
 
-      const normalizedEmail = email.toLowerCase().trim();
-      const existingUser = await User.findOne({ email: normalizedEmail });
-      if (existingUser) {
+      if (await User.findOne({ email: body.email })) {
         return res.status(409).json({ error: "A user with this email already exists" });
       }
 
-      if (!business?.businessName) {
-        return res.status(400).json({ error: "business.businessName is required to create a new company" });
-      }
-
-      let createdBusiness = null;
-      const resolvedBusinessId = crypto.randomUUID();
-      const now = new Date();
-      const trialEndsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-      createdBusiness = await Business.create({
-        id: resolvedBusinessId,
-        companyId: resolvedBusinessId,
-        businessName: business.businessName,
-        cac: business.cac || "",
-        location: business.location || "",
-        contact: business.contact || "",
-        industry: business.industry || "",
-        email: business.email || normalizedEmail,
-        plan: { tier: "solo", maxDevices: 1 },
-        billing: {
-          status: "trialing",
-          trialStartsAt: now,
-          trialEndsAt,
-          planTier: "solo",
-          seats: 1,
-          addons: { telegram: false, whatsapp: false },
-        },
+      const { user, business } = await createBusinessWithOwner({
+        email: body.email,
+        name: body.name,
+        passwordHash: await hashPassword(body.password),
+        business: body.business,
       });
 
-      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-      const user = await User.create({
-        id: crypto.randomUUID(),
-        email: normalizedEmail,
-        name: name.trim(),
-        passwordHash,
-        businessId: resolvedBusinessId,
-        role: "owner",
+      await recordConsent({
+        user,
+        purpose: "terms",
+        version: CONSENT_VERSIONS.terms,
+        source: "signup",
+        ...requestMeta(req),
       });
 
-      if (createdBusiness) {
-        createdBusiness = await ensureSubscription(resolvedBusinessId);
-      }
-
-      const cleanUser = sanitize(user);
-      broadcastUserEvent(resolvedBusinessId, "create", cleanUser);
-
-      const token = createToken(cleanUser);
-      setSessionCookie(res, cleanUser);
+      const session = issueSession(user, res);
+      broadcastUserEvent(user.businessId, "create", session.user);
       res.status(201).json({
         ok: true,
-        user: cleanUser,
-        token,
-        business: createdBusiness ? createdBusiness.toObject() : undefined,
+        ...session,
+        business: business ? (business.toObject ? business.toObject() : business) : undefined,
       });
     } catch (err) {
       if (err.code === 11000) {
@@ -99,23 +65,18 @@ function buildUsersRouter(io) {
     }
   });
 
-  router.post("/login", requireSameOrigin, async (req, res, next) => {
+  router.post("/login", requireSameOrigin, limits.loginByIp, limits.loginByEmail, async (req, res, next) => {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: "email and password are required" });
-      }
+      const body = parseBody(loginSchema, req, res);
+      if (!body) return;
 
-      const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+passwordHash");
+      const user = await User.findOne({ email: body.email }).select("+passwordHash");
       if (!user) return res.status(401).json({ error: "Invalid email or password" });
 
-      const match = await bcrypt.compare(password, user.passwordHash);
+      const match = await bcrypt.compare(body.password, user.passwordHash);
       if (!match) return res.status(401).json({ error: "Invalid email or password" });
 
-      const cleanUser = sanitize(user);
-      const token = createToken(cleanUser);
-      setSessionCookie(res, cleanUser);
-      res.json({ ok: true, user: cleanUser, token });
+      res.json({ ok: true, ...issueSession(user, res) });
     } catch (err) {
       next(err);
     }
@@ -123,6 +84,27 @@ function buildUsersRouter(io) {
 
   router.get("/me", requireAuth, async (req, res) => {
     res.json({ ok: true, user: sanitize(req.user) });
+  });
+
+  // Set or change your own password. Changing needs the current one, so a
+  // borrowed session cannot lock the owner out; an account created from
+  // HordeMart has none yet, so its first password needs only the session.
+  router.post("/me/password", requireAuth, requireSameOrigin, limits.loginByIp, async (req, res, next) => {
+    try {
+      const body = parseBody(passwordChangeSchema, req, res);
+      if (!body) return;
+      const user = await User.findOne({ id: req.user.id }).select("+passwordHash");
+      if (!user) return res.status(401).json({ error: "Session is no longer valid" });
+      if (user.passwordSet !== false) {
+        const ok = body.currentPassword && (await bcrypt.compare(body.currentPassword, user.passwordHash));
+        if (!ok) return res.status(403).json({ error: "Your current password is not right", field: "currentPassword" });
+      }
+      user.passwordHash = await hashPassword(body.newPassword);
+      user.passwordSet = true;
+      user.updatedAt = new Date();
+      await user.save();
+      res.json({ ok: true, user: sanitize(user) });
+    } catch (err) { next(err); }
   });
 
   router.post("/logout", requireSameOrigin, async (_req, res) => {
@@ -133,20 +115,18 @@ function buildUsersRouter(io) {
   // Inviting a teammate is authenticated and restricted to the same business.
   router.post("/invite", requireAuth, requireSameOrigin, requireOwnerOrAdmin, async (req, res, next) => {
     try {
-      const { email, name, password, businessId, role } = req.body;
-      if (!email || !name || !password || !businessId) {
-        return res.status(400).json({ error: "email, name, password and businessId are required" });
-      }
+      const body = parseBody(inviteSchema, req, res);
+      if (!body) return;
+      const { email: normalizedEmail, name, password, businessId, role } = body;
       if (businessId !== req.user.businessId) return res.status(403).json({ error: "You cannot invite users to another business" });
-      const normalizedEmail = email.toLowerCase().trim();
       if (await User.findOne({ email: normalizedEmail })) return res.status(409).json({ error: "A user with this email already exists" });
 
-      const allowedRole = ["admin", "staff", "accountant"].includes(role) ? role : "staff";
+      const allowedRole = role || "staff";
       const user = await User.create({
         id: crypto.randomUUID(),
         email: normalizedEmail,
-        name: name.trim(),
-        passwordHash: await bcrypt.hash(password, SALT_ROUNDS),
+        name,
+        passwordHash: await hashPassword(password),
         businessId: req.user.businessId,
         role: allowedRole,
       });
@@ -174,21 +154,20 @@ function buildUsersRouter(io) {
       const target = await User.findOne({ id });
       if (!target) return res.status(404).json({ error: "User not found" });
       if (target.businessId !== req.user.businessId) return res.status(403).json({ error: "You cannot modify users in another business" });
-      const { name, role, email, password } = req.body;
+      const body = parseBody(userPatchSchema, req, res);
+      if (!body) return;
+      const { name, role, email, password } = body;
       if (target.role === "owner" && target.id !== req.user.id) {
         return res.status(403).json({ error: "The business owner cannot be modified by another user" });
-      }
-      if (role && !["admin", "staff", "accountant"].includes(role) && role !== "owner") {
-        return res.status(400).json({ error: "Invalid role" });
       }
       if (role === "owner" && req.user.role !== "owner") {
         return res.status(403).json({ error: "Only the owner can assign owner role" });
       }
       const updates = { updatedAt: new Date() };
-      if (name) updates.name = name.trim();
+      if (name) updates.name = name;
       if (role) updates.role = role;
-      if (email) updates.email = email.toLowerCase().trim();
-      if (password) updates.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+      if (email) updates.email = email;
+      if (password) updates.passwordHash = await hashPassword(password);
 
       const user = await User.findOneAndUpdate({ id }, { $set: updates }, { new: true });
       if (!user) return res.status(404).json({ error: "User not found" });

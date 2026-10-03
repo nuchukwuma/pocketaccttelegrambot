@@ -13,6 +13,7 @@ import {
   PackagePlus,
   PackageMinus,
   Repeat,
+  Tag,
 } from "lucide-react";
 import { useLedger } from "./booksofacc/Ledgercontext";
 import {
@@ -40,7 +41,18 @@ const lastActivity = (product) => {
 const sortedEntries = (product) =>
   [...product.entries].sort((a, b) => (a.date === b.date ? 0 : a.date > b.date ? 1 : -1));
 
-const emptyProductForm = { name: "", description: "", date: todayISO(), amount: "" };
+const emptyProductForm = { name: "", description: "", sku: "", date: todayISO(), amount: "" };
+
+/* Item code (SKU). Optional. Matching codes are how a linked HordeMart
+   store keeps its stock in step with Mr Mouse, so they must be unique. */
+const SKU_MAX = 64;
+function skuProblem(value, products, exceptId = null) {
+  const sku = value.trim();
+  if (!sku) return null;
+  if (sku.length > SKU_MAX) return `Keep it to ${SKU_MAX} characters`;
+  if (products.some((p) => p.id !== exceptId && (p.sku || "").trim() === sku)) return "Another product already uses this code";
+  return null;
+}
 const emptyAdjustForm = { productId: "", newProductName: "", type: "", date: todayISO(), amount: "", note: "" };
 
 /* ---------------------------------------------------------------
@@ -131,6 +143,8 @@ export default function InventoryPage({ onNavigate }) {
     if (!productForm.date) errs.date = "Enter a date";
     const amt = Number(productForm.amount);
     if (productForm.amount === "" || isNaN(amt) || amt < 0) errs.amount = "Enter a valid amount";
+    const skuError = skuProblem(productForm.sku, products);
+    if (skuError) errs.sku = skuError;
 
     setFormErrors(errs);
     if (Object.keys(errs).length) return;
@@ -139,6 +153,7 @@ export default function InventoryPage({ onNavigate }) {
       id: uid(),
       name: productForm.name.trim(),
       description: productForm.description.trim(),
+      sku: productForm.sku.trim(),
       createdAt: productForm.date,
       entries: [{ id: uid(), type: "load", amount: amt, date: productForm.date, note: "Initial stock" }],
     };
@@ -214,6 +229,14 @@ export default function InventoryPage({ onNavigate }) {
     setAdjustStep("success");
   };
 
+  // Returns an error message, or null once saved.
+  const saveSku = (productId, value) => {
+    const problem = skuProblem(value, products, productId);
+    if (problem) return problem;
+    setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, sku: value.trim() } : p)));
+    return null;
+  };
+
   const closeAdjustModal = () => {
     setShowAdjustModal(false);
     resetAdjustForm();
@@ -235,6 +258,7 @@ export default function InventoryPage({ onNavigate }) {
           computeStock={computeStock}
           onBack={() => setSelectedId(null)}
           onAdjust={() => openAdjustFor(selectedProduct.id)}
+          onSaveSku={(value) => saveSku(selectedProduct.id, value)}
         />
       ) : (
         <>
@@ -378,6 +402,18 @@ export default function InventoryPage({ onNavigate }) {
                 onChange={(e) => setProductField("description", e.target.value)}
               />
             </Field>
+            <Field icon={Tag} label="Item code (SKU)" optional error={formErrors.sku}>
+              <input
+                className="ledger-input w-full py-2 text-sm"
+                placeholder="e.g., RICE-50KG"
+                maxLength={SKU_MAX}
+                value={productForm.sku}
+                onChange={(e) => setProductField("sku", e.target.value)}
+              />
+            </Field>
+            <p className="font-body text-[12px] text-ink/45 -mt-3">
+              Selling on HordeMart? Use the same code there to keep stock in step.
+            </p>
             <Field icon={Calendar} label="Date loaded" error={formErrors.date}>
               <input
                 type="date"
@@ -625,8 +661,23 @@ function SortHeader({ label, active, onClick }) {
    Per-product ledger page
 --------------------------------------------------------------- */
 
-function ProductLedgerView({ product, computeStock, onBack, onAdjust }) {
+function ProductLedgerView({ product, computeStock, onBack, onAdjust, onSaveSku }) {
   const stock = computeStock(product);
+  const [editingSku, setEditingSku] = useState(false);
+  const [skuDraft, setSkuDraft] = useState(product.sku || "");
+  const [skuError, setSkuError] = useState(null);
+
+  const startSkuEdit = () => {
+    setSkuDraft(product.sku || "");
+    setSkuError(null);
+    setEditingSku(true);
+  };
+  const submitSku = (e) => {
+    e.preventDefault();
+    const problem = onSaveSku(skuDraft);
+    if (problem) setSkuError(problem);
+    else setEditingSku(false);
+  };
   const entries = sortedEntries(product);
   let running = 0;
 
@@ -644,6 +695,37 @@ function ProductLedgerView({ product, computeStock, onBack, onAdjust }) {
           <h1 className="font-display text-3xl text-ink mb-1.5">{product.name}</h1>
           {product.description && <p className="font-body text-sm text-ink/55 max-w-lg">{product.description}</p>}
           <p className="font-mono text-[11px] text-ink/40 mt-2">Record opened {formatDate(product.createdAt)}</p>
+          {editingSku ? (
+            <form onSubmit={submitSku} className="mt-3 flex flex-wrap items-center gap-2">
+              <label htmlFor="product-sku" className="font-body text-[13px] text-ink-soft">
+                Item code
+              </label>
+              <input
+                id="product-sku"
+                autoFocus
+                className="ledger-input py-1.5 text-sm w-44"
+                maxLength={SKU_MAX}
+                value={skuDraft}
+                onChange={(e) => setSkuDraft(e.target.value)}
+                aria-invalid={skuError ? "true" : undefined}
+              />
+              <button type="submit" className="rounded-lg bg-action text-white text-[13px] font-medium px-3 py-1.5 hover:bg-action-deep">
+                Save
+              </button>
+              <button type="button" onClick={() => setEditingSku(false)} className="text-[13px] text-ink-soft hover:text-ink px-2">
+                Cancel
+              </button>
+              {skuError && <p className="w-full font-body text-xs text-clay">{skuError}</p>}
+            </form>
+          ) : (
+            <p className="font-body text-[13px] text-ink-soft mt-2 flex items-center gap-1.5">
+              <Tag size={12} />
+              {product.sku ? <span className="font-mono text-ink">{product.sku}</span> : <span>No item code</span>}
+              <button type="button" onClick={startSkuEdit} className="underline text-action ml-1">
+                {product.sku ? "Change" : "Add one"}
+              </button>
+            </p>
+          )}
         </div>
 
         <div className="rounded-lg border border-rule bg-white px-5 py-4 text-right shrink-0">

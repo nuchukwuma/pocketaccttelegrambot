@@ -1,10 +1,10 @@
 import React, { useState } from "react";
+import { useConsentPrompt } from "../legal/ConsentGate";
+import { botFetch } from "../botApi";
 import { MessageSquare, Check, Loader2, Printer, Share2, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { useLedger } from "./Ledgercontext";
 import { GlobalStyle, TopNav, Field, formatMoney } from "./ui";
 
-const BOT_SERVER_URL = import.meta.env?.VITE_BOT_SERVER_URL || "http://localhost:8787";
-const BOT_API_KEY = import.meta.env?.VITE_BOT_API_KEY || "";
 
 export default function InvoiceBuilder({ onNavigate }) {
   const { business: rawBusiness } = useLedger();
@@ -91,6 +91,9 @@ export default function InvoiceBuilder({ onNavigate }) {
     }
   };
 
+  // Messages to clients go through WhatsApp (Meta): ask before the first one.
+  const whatsappConsent = useConsentPrompt("whatsapp");
+
   const sendViaWhatsApp = async () => {
     if (!business?.id) return;
     setSendStatus("sending");
@@ -105,9 +108,8 @@ export default function InvoiceBuilder({ onNavigate }) {
     }));
 
     try {
-      const res = await fetch(`${BOT_SERVER_URL}/api/whatsapp/send-invoice`, {
+      const res = await botFetch("/api/whatsapp/send-invoice", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-bot-api-key": BOT_API_KEY },
         body: JSON.stringify({
           companyId: business.id,
           invoice: {
@@ -147,6 +149,7 @@ export default function InvoiceBuilder({ onNavigate }) {
   return (
     <div className="min-h-screen w-full bg-paper font-body">
       <GlobalStyle />
+      {whatsappConsent.prompt}
       <TopNav business={business} current="invoice" onNavigate={onNavigate} />
 
       {/* The preview is the deliverable, so it is what prints — the form,
@@ -278,7 +281,7 @@ export default function InvoiceBuilder({ onNavigate }) {
 
               <div className="pt-4 border-t border-rule space-y-3">
                 <button
-                  onClick={sendViaWhatsApp}
+                  onClick={() => whatsappConsent.ensure(sendViaWhatsApp)}
                   type="button"
                   disabled={sending || !business?.id}
                   className="w-full flex items-center justify-center gap-2 rounded-md bg-action text-white font-body text-sm font-medium min-h-[44px] px-4 hover:bg-action-deep disabled:opacity-60 transition-colors"

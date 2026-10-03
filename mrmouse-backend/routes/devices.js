@@ -35,7 +35,10 @@ function buildDevicesRouter(io) {
         return res.json({ ok: true, device: existing, maxDevices, alreadyRegistered: true, subscription: entitlements.subscription });
       }
 
-      const count = await Device.countDocuments({ businessId });
+      // Other devices only: two registrations of THIS device racing each
+      // other (a double-mounted effect, a retried request) must not count
+      // the copy that just landed as a second device and lock it out.
+      const count = await Device.countDocuments({ businessId, id: { $ne: deviceId } });
       if (count >= maxDevices) {
         return res.status(403).json({
           error: `Device limit reached for this plan (${maxDevices} device${maxDevices === 1 ? "" : "s"}). Ask your account admin to remove a device, or upgrade your plan.`,
@@ -57,7 +60,12 @@ function buildDevicesRouter(io) {
       io.to(`company_${businessId}`).emit("DEVICE_EVENT", { action: "register", device });
       res.status(201).json({ ok: true, device, maxDevices, subscription: entitlements.subscription });
     } catch (err) {
-      if (err.code === 11000) return res.status(409).json({ error: "Device is already registered." });
+      // The same device registering twice at once: the other request won.
+      if (err.code === 11000) {
+        const device = await Device.findOne({ id: req.body?.deviceId, businessId: req.user.businessId }).lean().catch(() => null);
+        if (device) return res.json({ ok: true, device, alreadyRegistered: true });
+        return res.status(409).json({ error: "Device is already registered." });
+      }
       next(err);
     }
   });
