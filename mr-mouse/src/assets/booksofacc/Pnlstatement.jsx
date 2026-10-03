@@ -98,6 +98,7 @@ export default function PnLStatement({ onNavigate }) {
           {tab === "trial" ? (
             <>
               <SummaryPanel
+                data-tour="book-page"
                 note={
                   trialBalance.balanced
                     ? "Debits and credits agree."
@@ -146,7 +147,7 @@ export default function PnLStatement({ onNavigate }) {
             </>
           ) : (
             <>
-              <SummaryPanel>
+              <SummaryPanel data-tour="book-page">
                 <SummaryCard label="Sales" value={formatMoney(pnl.sales)} accent />
                 <SummaryCard label="Purchases (COGS)" value={formatMoney(pnl.purchases)} warn={pnl.purchases > 0} />
                 <SummaryCard

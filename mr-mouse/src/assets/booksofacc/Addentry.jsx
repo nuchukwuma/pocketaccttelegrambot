@@ -208,7 +208,7 @@ export default function AddEntry({ onNavigate }) {
           </div>
         )}
 
-        <form onSubmit={submit} noValidate className="rounded-lg border border-rule bg-surface p-6 sm:p-8 space-y-6">
+        <form data-tour="addentry-form" onSubmit={submit} noValidate className="rounded-lg border border-rule bg-surface p-6 sm:p-8 space-y-6">
           {/* Category selector */}
           <div className={errors.category ? "ledger-field-error" : ""}>
             <label className="font-body text-label text-ink-soft mb-2 block">

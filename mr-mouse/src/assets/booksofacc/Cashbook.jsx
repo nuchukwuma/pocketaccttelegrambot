@@ -86,6 +86,7 @@ export default function CashBook({ onNavigate }) {
         <BackLink onClick={() => onNavigate("books")} />
 
         <SummaryPanel
+          data-tour="book-page"
           note={
             rows.length
               ? `Net movement over ${rows.length} ${rows.length === 1 ? "entry" : "entries"}: ${formatMoney(net)}`

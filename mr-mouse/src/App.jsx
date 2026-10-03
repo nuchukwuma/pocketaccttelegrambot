@@ -24,6 +24,9 @@ import { useSubscription, computeAccessState } from "./assets/useSubscription";
 import HordeMartLink, { isHordeMartLanding } from "./assets/integrations/HordeMartLink";
 import TermsGate from "./assets/legal/TermsGate";
 import DevHooks from "./assets/dev/DevHooks";
+import AccountingBasics from "./assets/help/AccountingBasics";
+import { TourProvider } from "./assets/tour/Tour";
+import AppearanceSync from "./assets/theme/AppearanceSync";
 
 const BOOK_PAGES = {
   cashbook: CashBook,
@@ -128,12 +131,16 @@ function AppShell() {
   }
 
   return (
+    <>
+    {/* The business's colour theme, from its synced preferences. */}
+    <AppearanceSync />
     <TermsGate onSignOut={logout}>
     <RequireOnline>
       <RequireDeviceSlot>
         <BillingReminderBanner onOpenBilling={() => onNavigate("settings")} />
         <AiAssistant onNavigate={onNavigate} />
         {import.meta.env.DEV && <DevHooks />}
+        <TourProvider onNavigate={onNavigate} page={page} params={params} blocked={blocked}>
         {page === "book-page" ? (
           (() => {
             const BookComponent = BOOK_PAGES[params.book] || CashBook;
@@ -151,16 +158,20 @@ function AppShell() {
               case "invoice":
                 return <InvoiceBuilder onNavigate={onNavigate} />;
               case "settings":
-                return <Settings onNavigate={onNavigate} />;
+                return <Settings onNavigate={onNavigate} params={params} />;
+              case "basics":
+                return <AccountingBasics onNavigate={onNavigate} />;
               case "dashboard":
               default:
                 return <Dashboard onNavigate={onNavigate} />;
             }
           })()
         )}
+        </TourProvider>
       </RequireDeviceSlot>
     </RequireOnline>
     </TermsGate>
+    </>
   );
 }
 
