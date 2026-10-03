@@ -37,7 +37,7 @@ export default function TermsGate({ children, onSignOut }) {
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-rule bg-white p-6 sm:p-8">
+      <div className="w-full max-w-md rounded-2xl border border-rule bg-surface p-6 sm:p-8">
         <h1 className="font-display text-2xl font-semibold text-ink mb-2">
           {changed ? "Our terms have changed" : "Please accept our terms"}
         </h1>
@@ -58,7 +58,7 @@ export default function TermsGate({ children, onSignOut }) {
           (version {CONSENTS.terms.version}).
         </ConsentCheckbox>
         {error && (
-          <p role="alert" className="mt-3 font-body text-[13px] text-clay">
+          <p role="alert" className="mt-3 font-body text-label text-clay">
             {error}
           </p>
         )}
@@ -67,7 +67,7 @@ export default function TermsGate({ children, onSignOut }) {
             type="button"
             onClick={agree}
             disabled={!checked || busy}
-            className="rounded-xl bg-action text-white font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-50"
+            className="rounded-xl bg-action text-on-action font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-50"
           >
             {busy ? "Saving…" : "Accept and continue"}
           </button>

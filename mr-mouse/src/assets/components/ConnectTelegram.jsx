@@ -60,7 +60,7 @@ function ConnectTelegram() {
   };
 
   return (
-    <div className="rounded-lg border border-rule bg-white p-5 max-w-md">
+    <div className="rounded-lg border border-rule bg-surface p-5 max-w-md">
       <div className="flex items-center gap-2 mb-3">
         <MessageCircle size={18} className="text-moss" />
         <h3 className="font-display text-lg text-ink">Connect Telegram</h3>
@@ -73,7 +73,7 @@ function ConnectTelegram() {
         <button
           onClick={generateCode}
           disabled={loading || !business?.id}
-          className="w-full rounded-lg bg-action text-white font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors disabled:opacity-50"
+          className="w-full rounded-lg bg-action text-on-action font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors disabled:opacity-50"
         >
           {loading ? "Generating…" : "Generate connection code"}
         </button>
@@ -102,7 +102,7 @@ function ConnectTelegram() {
               Send: <code className="bg-paper-sunk px-1 rounded">/link {code}</code>
             </li>
           </ol>
-          <p className="font-mono text-[10px] text-ink/40">Expires {new Date(expiresAt).toLocaleTimeString()}</p>
+          <p className="font-mono text-micro text-ink/40">Expires {new Date(expiresAt).toLocaleTimeString()}</p>
         </div>
       )}
 

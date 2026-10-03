@@ -131,7 +131,7 @@ export default function Settings({ onNavigate }) {
               key={key}
               onClick={() => setTab(key)}
               className={`rounded-full px-4 py-2 font-body text-sm font-medium transition-colors ${
-                tab === key ? "bg-action text-white" : "bg-white border border-rule text-ink/60"
+                tab === key ? "bg-action text-on-action" : "bg-surface border border-rule text-ink/60"
               }`}
             >
               {label}
@@ -222,10 +222,10 @@ function PlanTab({ companyId }) {
         <p className="text-center py-10 text-sm text-ink/45">Loading billing…</p>
       ) : (
         <>
-          <div className="rounded-lg border border-rule bg-white p-5 sm:p-6">
+          <div className="rounded-lg border border-rule bg-surface p-5 sm:p-6">
             <div className="flex items-center justify-between gap-3 mb-4">
               <div>
-                <p className="font-body text-[13px] text-ink-soft">Subscription plans</p>
+                <p className="font-body text-label text-ink-soft">Subscription plans</p>
                 <h2 className="font-display text-lg text-ink mt-1">Choose what fits your business</h2>
               </div>
               <CreditCard size={19} className="text-moss" />
@@ -274,7 +274,7 @@ function PlanTab({ companyId }) {
                   onChange={(e) => setSeats(Math.max(5, Number(e.target.value) || 5))}
                 />
               </Field>
-              <p className="font-mono text-[10px] text-ink/40 mt-1">
+              <p className="font-mono text-micro text-ink/40 mt-1">
                 {naira(companyTotal)}/month for {seats} users.
               </p>
             </div>
@@ -293,8 +293,8 @@ function PlanTab({ companyId }) {
             </button>
           </div>
 
-          <div className="rounded-lg border border-rule bg-white p-5 sm:p-6">
-            <p className="font-body text-[13px] text-ink-soft mb-3">Optional monthly add-ons</p>
+          <div className="rounded-lg border border-rule bg-surface p-5 sm:p-6">
+            <p className="font-body text-label text-ink-soft mb-3">Optional monthly add-ons</p>
             <div className="space-y-3">
               <AddOnRow
                 icon={Send}
@@ -350,7 +350,7 @@ function AiTab({ companyId }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border border-rule bg-white p-5 sm:p-6">
+      <div className="rounded-lg border border-rule bg-surface p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <div className="rounded-full bg-paper-sunk p-2.5 shrink-0">
             <Sparkles size={18} className="text-moss" />
@@ -365,14 +365,14 @@ function AiTab({ companyId }) {
         </div>
 
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`rounded-xl border-2 p-4 ${!premiumActive ? "border-moss bg-paper-sunk" : "border-ink/10 bg-white"}`}>
+          <div className={`rounded-xl border-2 p-4 ${!premiumActive ? "border-moss bg-paper-sunk" : "border-ink/10 bg-surface"}`}>
             <div className="flex items-center justify-between gap-2">
               <div>
                 <div className="font-display text-base text-ink">Free AI — Gemini</div>
                 <div className="text-xs text-ink/45 mt-1">Included at no extra charge</div>
               </div>
               {!premiumActive && (
-                <span className="rounded-full bg-moss text-white px-2.5 py-1 font-body text-[12px] font-medium">
+                <span className="rounded-full bg-moss text-on-action px-2.5 py-1 font-body text-caption font-medium">
                   Active
                 </span>
               )}
@@ -401,14 +401,14 @@ function AiTab({ companyId }) {
             </p>
           </div>
 
-          <div className={`rounded-xl border-2 p-4 ${premiumActive ? "border-action bg-action text-white" : "border-ink/10 bg-white"}`}>
+          <div className={`rounded-xl border-2 p-4 ${premiumActive ? "border-action bg-action text-on-action" : "border-ink/10 bg-surface"}`}>
             <div className="flex items-center justify-between gap-2">
               <div>
-                <div className={`font-display text-base ${premiumActive ? "text-white" : "text-ink"}`}>Premium AI — Claude</div>
-                <div className={`text-xs mt-1 ${premiumActive ? "text-white/60" : "text-ink/45"}`}>₦1,000/month</div>
+                <div className={`font-display text-base ${premiumActive ? "text-on-action" : "text-ink"}`}>Premium AI — Claude</div>
+                <div className={`text-xs mt-1 ${premiumActive ? "text-on-action/60" : "text-ink/45"}`}>₦1,000/month</div>
               </div>
               {premiumActive && (
-                <span className="rounded-full bg-white/15 text-white px-2.5 py-1 font-body text-[12px] font-medium">
+                <span className="rounded-full bg-on-canvas/15 text-on-canvas px-2.5 py-1 font-body text-caption font-medium">
                   Active
                 </span>
               )}
@@ -422,10 +422,10 @@ function AiTab({ companyId }) {
                 ["Same accounting workflow", "The same tools, same data and same confirmation safeguards are used."],
               ].map(([title, desc]) => (
                 <div key={title} className="flex gap-2.5">
-                  <CheckCircle2 size={15} className={premiumActive ? "text-white shrink-0 mt-0.5" : "text-moss shrink-0 mt-0.5"} />
+                  <CheckCircle2 size={15} className={premiumActive ? "text-on-action shrink-0 mt-0.5" : "text-moss shrink-0 mt-0.5"} />
                   <div>
-                    <div className={`font-body text-sm font-medium ${premiumActive ? "text-white" : "text-ink"}`}>{title}</div>
-                    <div className={`font-body text-xs mt-0.5 ${premiumActive ? "text-white/55" : "text-ink/50"}`}>{desc}</div>
+                    <div className={`font-body text-sm font-medium ${premiumActive ? "text-on-action" : "text-ink"}`}>{title}</div>
+                    <div className={`font-body text-xs mt-0.5 ${premiumActive ? "text-on-canvas/55" : "text-ink/50"}`}>{desc}</div>
                   </div>
                 </div>
               ))}
@@ -435,13 +435,13 @@ function AiTab({ companyId }) {
               <button
                 onClick={subscribe}
                 disabled={busy}
-                className="mt-5 w-full rounded-lg bg-action text-white font-body text-sm font-medium px-5 py-2.5 hover:bg-action-deep disabled:opacity-50"
+                className="mt-5 w-full rounded-lg bg-action text-on-action font-body text-sm font-medium px-5 py-2.5 hover:bg-action-deep disabled:opacity-50"
               >
                 {busy ? "Opening payment…" : "Upgrade to Premium AI — ₦1,000/mo"}
               </button>
             )}
 
-            <p className={`font-body text-xs mt-4 ${premiumActive ? "text-white/50" : "text-ink/45"}`}>
+            <p className={`font-body text-xs mt-4 ${premiumActive ? "text-on-canvas/50" : "text-ink/45"}`}>
               Premium is optional. Free Gemini remains available when Premium AI is not active.
             </p>
           </div>
@@ -460,7 +460,7 @@ function AiTab({ companyId }) {
 
 function BillingCard({ icon: Icon, name, price, detail, active, button, busy, onClick }) {
   return (
-    <div className={`rounded-xl border-2 p-4 ${active ? "border-moss bg-paper-sunk" : "border-ink/10 bg-white"}`}>
+    <div className={`rounded-xl border-2 p-4 ${active ? "border-moss bg-paper-sunk" : "border-ink/10 bg-surface"}`}>
       <Icon size={18} className="text-moss" />
       <div className="font-display text-base text-ink mt-3">{name}</div>
       <div className="font-mono text-sm text-ink/70 mt-1">{price}</div>
@@ -468,7 +468,7 @@ function BillingCard({ icon: Icon, name, price, detail, active, button, busy, on
       <button
         onClick={onClick}
         disabled={busy}
-        className="mt-4 w-full rounded-lg bg-action text-white font-body text-xs font-medium py-2.5 hover:bg-action-deep disabled:opacity-50"
+        className="mt-4 w-full rounded-lg bg-action text-on-action font-body text-xs font-medium py-2.5 hover:bg-action-deep disabled:opacity-50"
       >
         {busy ? "Opening payment…" : active ? "Current plan" : button}
       </button>
@@ -502,7 +502,7 @@ function AddOnRow({ icon: Icon, label, description, price, active, disabled, onC
 
 function SupportCard() {
   return (
-    <div className="rounded-lg border border-rule bg-white p-4 text-sm">
+    <div className="rounded-lg border border-rule bg-surface p-4 text-sm">
       <div className="font-medium text-ink">Billing complaints</div>
       <p className="text-xs text-ink/50 mt-1">
         Contact <a className="underline" href="mailto:2026mischief@gmail.com">2026mischief@gmail.com</a>
@@ -533,8 +533,8 @@ function DevicesTab({ businessId }) {
       ) : devices.length === 0 ? (
         <EmptyState title="No devices registered yet" subtitle="Devices appear here the first time they log in." />
       ) : (
-        <div className="rounded-lg border border-rule bg-white overflow-hidden">
-          <div className="hidden sm:grid grid-cols-[2fr_1.2fr_1.2fr_auto] gap-3 px-5 py-3 bg-paper-sunk font-body text-[13px] text-ink-soft">
+        <div className="rounded-lg border border-rule bg-surface overflow-hidden">
+          <div className="hidden sm:grid grid-cols-[2fr_1.2fr_1.2fr_auto] gap-3 px-5 py-3 bg-paper-sunk font-body text-label text-ink-soft">
             <span>Device</span><span>First seen</span><span>Last seen</span><span></span>
           </div>
           <div className="divide-y divide-rule">
@@ -543,10 +543,10 @@ function DevicesTab({ businessId }) {
                 <span className="col-span-2 sm:col-span-1 font-body text-sm text-ink truncate flex items-center gap-2">
                   <Laptop size={14} className="text-ink/40 shrink-0" /> {d.label}
                 </span>
-                <span className="font-mono text-[11px] text-ink/50 flex items-center gap-1.5">
+                <span className="font-mono text-tiny text-ink/50 flex items-center gap-1.5">
                   <Clock size={11} /> {formatDate(d.firstSeenAt?.slice(0, 10))}
                 </span>
-                <span className="font-mono text-[11px] text-ink/50">{formatDate(d.lastSeenAt?.slice(0, 10))}</span>
+                <span className="font-mono text-tiny text-ink/50">{formatDate(d.lastSeenAt?.slice(0, 10))}</span>
                 <button onClick={() => setConfirmTarget(d)} className="justify-self-end flex items-center gap-1.5 rounded-full border border-clay/25 px-3 py-1.5 font-body text-xs text-clay hover:bg-clay/8">
                   <Trash2 size={12} /> Remove
                 </button>
@@ -566,7 +566,7 @@ function DevicesTab({ businessId }) {
             <span className="font-medium text-ink">{confirmTarget.label}</span> will need to log in again to regain access.
           </p>
           <div className="flex gap-3">
-            <button onClick={handleRemove} className="flex-1 rounded-lg bg-clay text-white font-body text-sm font-medium py-3">Remove device</button>
+            <button onClick={handleRemove} className="flex-1 rounded-lg bg-clay text-on-action font-body text-sm font-medium py-3">Remove device</button>
             <button onClick={() => setConfirmTarget(null)} className="flex-1 rounded-lg border border-ink/15 text-ink font-body text-sm font-medium py-3">Cancel</button>
           </div>
         </Modal>

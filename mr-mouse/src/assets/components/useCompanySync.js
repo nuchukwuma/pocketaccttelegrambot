@@ -21,6 +21,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, upsertLocal, softDeleteLocal, bulkHydrate, queueOutbox, clearOutboxItem, getPendingOutbox } from "./Db";
 import { getAuthToken, getAuthHeaders } from "../auth";
 import { getOrCreateDeviceId } from "../deviceId";
+import { processImage, toWireImage, fromWireImage } from "../media/images";
 
 const SERVER_URL = import.meta.env?.VITE_SYNC_SERVER_URL || "http://localhost:5000";
 const STATE_REQUEST_TIMEOUT_MS = 3000; // how long to wait for a peer to answer before giving up
@@ -32,8 +33,9 @@ const ENTITY_TABLE = {
   pendingOrder: "pendingOrders",
   invoice: "invoices",
   deadline: "deadlines",
+  pref: "prefs",
 };
-const RELAYED_ENTITIES = Object.keys(ENTITY_TABLE); // everything except 'business'
+const RELAYED_ENTITIES = Object.keys(ENTITY_TABLE); // everything except 'business' and 'image'
 
 export function useCompanySync(companyId) {
   const socketRef = useRef(null);
@@ -109,13 +111,17 @@ export function useCompanySync(companyId) {
     async (since) => {
       const sinceDate = since ? new Date(since) : new Date(0);
       const isNewer = (r) => new Date(r.updatedAt) > sinceDate;
-      const [p, t, s, o, i, d] = await Promise.all([
+      // Images are never in a bulk snapshot: a few of them would push one
+      // message past the server's 1MB limit. They catch up one message per
+      // image from the server instead (see the backend's REQUEST_STATE).
+      const [p, t, s, o, i, d, pr] = await Promise.all([
         db.products.where({ companyId }).toArray(),
         db.transactions.where({ companyId }).toArray(),
         db.settlements.where({ companyId }).toArray(),
         db.pendingOrders.where({ companyId }).toArray(),
         db.invoices.where({ companyId }).toArray(),
         db.deadlines.where({ companyId }).toArray(),
+        db.prefs.where({ companyId }).toArray(),
       ]);
       return {
         products: p.filter(isNewer),
@@ -124,6 +130,7 @@ export function useCompanySync(companyId) {
         pendingOrders: o.filter(isNewer),
         invoices: i.filter(isNewer),
         deadlines: d.filter(isNewer),
+        prefs: pr.filter(isNewer),
       };
     },
     [companyId]
@@ -137,6 +144,7 @@ export function useCompanySync(companyId) {
       bulkHydrate("pendingOrders", entities.pendingOrders),
       bulkHydrate("invoices", entities.invoices),
       bulkHydrate("deadlines", entities.deadlines),
+      bulkHydrate("prefs", entities.prefs),
     ]);
   }, []);
 
@@ -199,6 +207,71 @@ export function useCompanySync(companyId) {
     }
   }, [companyId]);
 
+  // ---- connection status ref, so mutate() doesn't get recreated on every flip
+  const connectionStatusRef = useRef(connectionStatus);
+  useEffect(() => {
+    connectionStatusRef.current = connectionStatus;
+  }, [connectionStatus]);
+
+  // ---- Images: Blob on this device, base64 on the wire --------------------------
+  const applyIncomingImage = useCallback(async (action, payload) => {
+    if (!payload?.id) return;
+    if (action === "delete") {
+      // Drop the bytes, keep a tombstone so a late copy can't resurrect it.
+      await db.images.put({ id: payload.id, companyId, deleted: true, blob: null, updatedAt: new Date().toISOString() });
+      return;
+    }
+    const existing = await db.images.get(payload.id);
+    if (existing?.updatedAt && payload.updatedAt && existing.updatedAt >= payload.updatedAt) return;
+    const record = fromWireImage(payload);
+    if (record) await db.images.put({ ...record, companyId, deleted: false });
+  }, [companyId]);
+
+  const relay = useCallback(async (mutationArgs) => {
+    const socket = socketRef.current;
+    if (connectionStatusRef.current === "connected" && socket) socket.emit("SYNC_MUTATE", mutationArgs);
+    else await queueOutbox(mutationArgs);
+  }, []);
+
+  /**
+   * Process and keep an image from a file input or the camera, then send it
+   * to the business's other devices. Resolves to the new image id; rejects
+   * with an ImageError whose message can be shown as-is.
+   */
+  const saveImage = useCallback(
+    async (file, { kind }) => {
+      if (!companyId) throw new Error("Not signed in");
+      const processed = await processImage(file);
+      const now = new Date().toISOString();
+      const record = {
+        id: crypto.randomUUID(),
+        companyId,
+        kind,
+        blob: processed.blob,
+        mime: processed.mime,
+        width: processed.width,
+        height: processed.height,
+        bytes: processed.bytes,
+        createdAt: now,
+        updatedAt: now,
+        deleted: false,
+      };
+      await db.images.put(record);
+      await relay({ companyId, entity: "image", action: "create", id: record.id, payload: await toWireImage(record) });
+      return record.id;
+    },
+    [companyId, relay]
+  );
+
+  const deleteImage = useCallback(
+    async (imageId) => {
+      if (!companyId || !imageId) return;
+      await db.images.put({ id: imageId, companyId, deleted: true, blob: null, updatedAt: new Date().toISOString() });
+      await relay({ companyId, entity: "image", action: "delete", id: imageId, payload: { id: imageId } });
+    },
+    [companyId, relay]
+  );
+
   // ---- Socket.io lifecycle ------------------------------------------------------
   useEffect(() => {
     if (!companyId) return undefined;
@@ -225,10 +298,22 @@ export function useCompanySync(companyId) {
 
     // Live change from another connected device.
     socket.on("SYNC_EVENT", async ({ entity, action, payload }) => {
+      if (entity === "image") {
+        await applyIncomingImage(action, payload);
+        return;
+      }
       const table = ENTITY_TABLE[entity];
       if (!table || !payload) return;
       if (action === "delete") await softDeleteLocal(table, payload.id);
       else await upsertLocal(table, payload);
+    });
+
+    // The server refused something we sent (today: an image over the size
+    // limit or of the wrong type). Mark it, so the screen that shows the
+    // image can say it isn't reaching other devices.
+    socket.on("SYNC_REJECTED", async ({ entity, id, reason }) => {
+      console.warn(`[sync] server refused ${entity} ${id}: ${reason}`);
+      if (entity === "image" && id) await db.images.update(id, { syncError: reason });
     });
 
     // A newly-joined (or reconnecting) peer is asking us to catch them up.
@@ -266,7 +351,7 @@ export function useCompanySync(companyId) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [companyId, metaKey, requestStateFromPeers, flushOutbox, buildLocalSnapshot, applyPeerSnapshot]);
+  }, [companyId, metaKey, requestStateFromPeers, flushOutbox, buildLocalSnapshot, applyPeerSnapshot, applyIncomingImage]);
 
   // ---- Business: fetch on mount, since it's still server-authoritative -------
   useEffect(() => {
@@ -274,11 +359,6 @@ export function useCompanySync(companyId) {
     fetchBusinessFromServer();
   }, [companyId, fetchBusinessFromServer]);
 
-  // ---- connection status ref, so mutate() doesn't get recreated on every flip
-  const connectionStatusRef = useRef(connectionStatus);
-  useEffect(() => {
-    connectionStatusRef.current = connectionStatus;
-  }, [connectionStatus]);
 
   // ---- Optimistic mutation: local write + relay, no database write anywhere --
   const mutate = useCallback(
@@ -337,6 +417,8 @@ export function useCompanySync(companyId) {
     invoices: invoices || [],
     deadlines: deadlines || [],
     mutate,
+    saveImage,
+    deleteImage,
     requestStateFromPeers,
   };
 }

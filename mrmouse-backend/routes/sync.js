@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 const express = require("express");
+const { z } = require("zod");
 const Business = require("../models/Business");
 const { requireOwnerOrAdmin } = require("../auth");
 
@@ -38,12 +39,36 @@ router.get("/business", async (req, res, next) => {
 /**
  * POST /api/sync/business
  * Body: { id, ...profileFields }
- * Upserts the one thing that stays in Mongo. Idempotent by id (== companyId).
+ * Updates the business's PROFILE only. Idempotent by id (== companyId).
+ *
+ * Only the fields below can be written here. This used to $set whatever
+ * the app sent, so any owner could post `billing.status: "active"` or a
+ * bigger `plan.maxDevices` and skip paying. Plan and billing change only
+ * through routes/billing.js, after Paystack confirms a payment.
  */
+const HEX_COLOUR = /^#[0-9a-fA-F]{6}$/;
+const profileSchema = z
+  .object({
+    id: z.string().min(1).max(100),
+    businessName: z.string().trim().min(1).max(200).optional(),
+    cac: z.string().trim().max(60).optional(),
+    location: z.string().trim().max(300).optional(),
+    contact: z.string().trim().max(120).optional(),
+    industry: z.string().trim().max(120).optional(),
+    email: z.union([z.string().trim().toLowerCase().email().max(254), z.literal("")]).optional(),
+    logoImageId: z.string().max(100).nullable().optional(),
+    brandColor: z.string().regex(HEX_COLOUR, "Brand colour must look like #22307a").nullable().optional(),
+  })
+  .strip();
+
 router.post("/business", requireOwnerOrAdmin, async (req, res, next) => {
   try {
-    const { id, ...fields } = req.body;
-    if (!id) return res.status(400).json({ error: "id (companyId) is required" });
+    const parsed = profileSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      return res.status(400).json({ error: issue?.message || "Check the business details", field: issue?.path?.join(".") });
+    }
+    const { id, ...fields } = parsed.data;
     if (id !== req.user.businessId) return res.status(403).json({ error: "You cannot modify another business" });
 
     const saved = await Business.findOneAndUpdate(

@@ -215,7 +215,7 @@ export default function AiAssistant({ onNavigate }) {
       {/* Floating button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-action text-white shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-action text-on-action shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
         aria-label="Ask the assistant"
       >
         {open ? "✕" : "💬"}
@@ -228,7 +228,7 @@ export default function AiAssistant({ onNavigate }) {
       )}
 
       {open && aiAllowed && (
-        <div className="fixed bottom-24 right-4 left-4 z-50 w-auto max-w-sm mx-auto sm:left-auto sm:mx-0 sm:w-[92vw] h-[65vh] bg-white rounded-2xl shadow-2xl border border-black/10 flex flex-col overflow-hidden">
+        <div className="fixed bottom-24 right-4 left-4 z-50 w-auto max-w-sm mx-auto sm:left-auto sm:mx-0 sm:w-[92vw] h-[65vh] bg-surface rounded-2xl shadow-2xl border border-black/10 flex flex-col overflow-hidden">
 
           {/* Header */}
           <div className="px-4 py-3 border-b bg-paper flex items-center justify-between gap-3">
@@ -237,7 +237,7 @@ export default function AiAssistant({ onNavigate }) {
               Mr. Mouse assistant
             </div>
 
-            <div className="font-body text-[13px] text-ink-soft">
+            <div className="font-body text-label text-ink-soft">
               {premiumActive
                 ? "Premium · Claude"
                 : "Free · Gemini"}
@@ -247,7 +247,7 @@ export default function AiAssistant({ onNavigate }) {
 
           {/* Free AI notice */}
           {!premiumActive && (
-            <div className="px-4 py-2 border-b bg-paper-sunk text-[11px] text-ink/60">
+            <div className="px-4 py-2 border-b bg-paper-sunk text-tiny text-ink/60">
 
               Free Gemini AI is active.
               Free limits may apply to request frequency
@@ -301,7 +301,7 @@ export default function AiAssistant({ onNavigate }) {
                         key={example}
                         onClick={() => send(example)}
                         disabled={busy || pendingConfirm}
-                        className="text-xs px-3 py-2 rounded-full border border-action/20 bg-white text-action hover:bg-action hover:text-white transition disabled:opacity-50"
+                        className="text-xs px-3 py-2 rounded-full border border-action/20 bg-surface text-action hover:bg-action hover:text-on-action transition disabled:opacity-50"
                       >
                         {example}
                       </button>
@@ -357,7 +357,7 @@ export default function AiAssistant({ onNavigate }) {
                 <span
                   className={`inline-block px-3 py-2 rounded-xl max-w-[85%] whitespace-pre-wrap ${
                     m.role === "user"
-                      ? "bg-action text-white"
+                      ? "bg-action text-on-action"
                       : "bg-paper-sunk"
                   }`}
                 >
@@ -382,7 +382,7 @@ export default function AiAssistant({ onNavigate }) {
                     respondToConfirm(true)
                   }
                   disabled={busy}
-                  className="px-3 py-1.5 rounded-lg bg-action text-white text-sm disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg bg-action text-on-action text-sm disabled:opacity-50"
                 >
                   ✅ Confirm
                 </button>
@@ -392,7 +392,7 @@ export default function AiAssistant({ onNavigate }) {
                     respondToConfirm(false)
                   }
                   disabled={busy}
-                  className="px-3 min-h-[44px] rounded-md border border-rule bg-white text-ink text-sm disabled:opacity-50"
+                  className="px-3 min-h-tap rounded-md border border-rule bg-surface text-ink text-sm disabled:opacity-50"
                 >
                   ❌ Cancel
                 </button>
@@ -434,7 +434,7 @@ export default function AiAssistant({ onNavigate }) {
                 pendingConfirm ||
                 !input.trim()
               }
-              className="px-3 py-2 rounded-lg bg-action text-white text-sm disabled:opacity-50"
+              className="px-3 py-2 rounded-lg bg-action text-on-action text-sm disabled:opacity-50"
             >
               →
             </button>

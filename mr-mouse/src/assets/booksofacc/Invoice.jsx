@@ -157,6 +157,7 @@ export default function InvoiceBuilder({ onNavigate }) {
       <style>{`
         @media print {
           @page { margin: 16mm; }
+          /* Paper is white whatever the screen theme is. */
           body { background: #fff; }
         }
       `}</style>
@@ -166,7 +167,7 @@ export default function InvoiceBuilder({ onNavigate }) {
           <button
             onClick={handleBackToDashboard}
             type="button"
-            className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-[44px]"
+            className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-tap"
           >
             <ArrowLeft size={15} /> Back to dashboard
           </button>
@@ -174,7 +175,7 @@ export default function InvoiceBuilder({ onNavigate }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:block">
           {/* ---- Form ---- */}
-          <div className="bg-white p-6 rounded-lg border border-rule print:hidden">
+          <div className="bg-surface p-6 rounded-lg border border-rule print:hidden">
             <h2 className="font-display text-xl font-semibold mb-5 text-ink">Create invoice</h2>
 
             <div className="space-y-5 font-body text-sm">
@@ -215,7 +216,7 @@ export default function InvoiceBuilder({ onNavigate }) {
               </Field>
 
               <div>
-                <p className="font-body text-[13px] text-ink-soft mb-2">Line items</p>
+                <p className="font-body text-label text-ink-soft mb-2">Line items</p>
                 <div className="space-y-2">
                   {invoice.items.map((item, index) => (
                     <div key={index} className="flex gap-2 items-end">
@@ -273,7 +274,7 @@ export default function InvoiceBuilder({ onNavigate }) {
                 <button
                   onClick={addItem}
                   type="button"
-                  className="inline-flex items-center gap-1.5 font-body text-[13px] font-medium text-action hover:underline mt-3 min-h-[44px]"
+                  className="inline-flex items-center gap-1.5 font-body text-label font-medium text-action hover:underline mt-3 min-h-tap"
                 >
                   <Plus size={14} /> Add item
                 </button>
@@ -284,7 +285,7 @@ export default function InvoiceBuilder({ onNavigate }) {
                   onClick={() => whatsappConsent.ensure(sendViaWhatsApp)}
                   type="button"
                   disabled={sending || !business?.id}
-                  className="w-full flex items-center justify-center gap-2 rounded-md bg-action text-white font-body text-sm font-medium min-h-[44px] px-4 hover:bg-action-deep disabled:opacity-60 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 rounded-md bg-action text-on-action font-body text-sm font-medium min-h-tap px-4 hover:bg-action-deep disabled:opacity-60 transition-colors"
                 >
                   {sending ? (
                     <>
@@ -305,7 +306,7 @@ export default function InvoiceBuilder({ onNavigate }) {
                   <button
                     onClick={handleShare}
                     type="button"
-                    className="flex items-center justify-center gap-2 rounded-md border border-rule bg-white text-ink font-body text-sm font-medium min-h-[44px] hover:bg-paper transition-colors"
+                    className="flex items-center justify-center gap-2 rounded-md border border-rule bg-surface text-ink font-body text-sm font-medium min-h-tap hover:bg-paper transition-colors"
                   >
                     <Share2 size={16} /> Share…
                   </button>
@@ -313,14 +314,14 @@ export default function InvoiceBuilder({ onNavigate }) {
                   <button
                     onClick={handlePrint}
                     type="button"
-                    className="flex items-center justify-center gap-2 rounded-md border border-rule bg-white text-ink font-body text-sm font-medium min-h-[44px] hover:bg-paper transition-colors"
+                    className="flex items-center justify-center gap-2 rounded-md border border-rule bg-surface text-ink font-body text-sm font-medium min-h-tap hover:bg-paper transition-colors"
                   >
                     <Printer size={16} /> Print
                   </button>
                 </div>
 
                 {sendStatus === "error" && (
-                  <p role="alert" className="font-body text-[13px] text-clay">
+                  <p role="alert" className="font-body text-label text-clay">
                     {sendError}
                   </p>
                 )}
@@ -338,7 +339,7 @@ export default function InvoiceBuilder({ onNavigate }) {
 
 function InvoicePreview({ business, invoice, total }) {
   return (
-    <div className="bg-white p-8 rounded-lg border border-rule text-ink flex flex-col justify-between print:border-none print:p-0 print:w-full">
+    <div className="bg-surface p-8 rounded-lg border border-rule text-ink flex flex-col justify-between print:border-none print:p-0 print:w-full">
       <div>
         <div className="flex justify-between items-start gap-6 rule-sum pb-6 mb-6">
           <div className="min-w-0">
@@ -346,37 +347,37 @@ function InvoicePreview({ business, invoice, total }) {
               {business?.name || "Your Business"}
             </h1>
             {business?.address && (
-              <p className="font-body text-[13px] text-ink-soft">{business.address}</p>
+              <p className="font-body text-label text-ink-soft">{business.address}</p>
             )}
             {business?.phone && (
-              <p className="font-body text-[13px] text-ink-soft">{business.phone}</p>
+              <p className="font-body text-label text-ink-soft">{business.phone}</p>
             )}
           </div>
           <div className="text-right shrink-0">
             <h2 className="font-display text-lg font-semibold text-ink">Invoice</h2>
-            <p className="font-mono text-[13px] text-ink-soft">#{invoice.invoiceNumber}</p>
-            <p className="font-mono text-[13px] text-ink-soft">{invoice.date}</p>
+            <p className="font-mono text-label text-ink-soft">#{invoice.invoiceNumber}</p>
+            <p className="font-mono text-label text-ink-soft">{invoice.date}</p>
           </div>
         </div>
 
         <div className="mb-6">
-          <p className="font-body text-[13px] text-ink-soft mb-1">Billed to</p>
+          <p className="font-body text-label text-ink-soft mb-1">Billed to</p>
           <p className="font-body text-sm font-medium">{invoice.clientName || "Client name"}</p>
         </div>
 
         <table className="w-full text-left border-collapse mb-6">
           <thead>
             <tr>
-              <th className="font-body text-[11px] font-medium text-ink-soft py-2 border-b border-rule">
+              <th className="font-body text-tiny font-medium text-ink-soft py-2 border-b border-rule">
                 Description
               </th>
-              <th className="font-body text-[11px] font-medium text-ink-soft py-2 border-b border-rule text-right">
+              <th className="font-body text-tiny font-medium text-ink-soft py-2 border-b border-rule text-right">
                 Qty
               </th>
-              <th className="font-body text-[11px] font-medium text-ink-soft py-2 border-b border-rule text-right">
+              <th className="font-body text-tiny font-medium text-ink-soft py-2 border-b border-rule text-right">
                 Price
               </th>
-              <th className="font-body text-[11px] font-medium text-ink-soft py-2 border-b border-rule text-right">
+              <th className="font-body text-tiny font-medium text-ink-soft py-2 border-b border-rule text-right">
                 Amount
               </th>
             </tr>

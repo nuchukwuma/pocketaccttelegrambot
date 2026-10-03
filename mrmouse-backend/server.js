@@ -33,7 +33,28 @@ const ENTITY_TABLE = {
   pendingOrder: "pendingOrders",
   invoice: "invoices",
   deadline: "deadlines",
+  pref: "prefs",
 };
+
+// Images (logos, product photos, receipts) are deliberately NOT in
+// ENTITY_TABLE. That keeps them out of the bulk STATE_OFFERED bootstrap
+// and out of the daily BusinessBackup document — a business with a few
+// dozen photos would otherwise push one socket message past the 1MB limit
+// below and one backup document towards MongoDB's 16MB cap. They are sent
+// one message per image instead (see REQUEST_STATE).
+const IMAGE_MIME = new Set(["image/webp", "image/png"]);
+// base64 of the app's 150KB processed-image limit, plus headroom.
+const MAX_IMAGE_BASE64 = 220 * 1024;
+
+function imageProblem(action, payload) {
+  if (action === "delete") return null;
+  if (!payload || typeof payload !== "object") return "missing payload";
+  if (!IMAGE_MIME.has(payload.mime)) return "unsupported image type";
+  if (typeof payload.data !== "string" || payload.data.length === 0) return "missing image data";
+  if (payload.data.length > MAX_IMAGE_BASE64) return "image too large";
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(payload.data)) return "image data is not base64";
+  return null;
+}
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
@@ -87,6 +108,10 @@ async function start() {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: corsOptions,
+    // Socket.io's default, stated so it is a decision: no single sync
+    // message may exceed 1MB. Images are capped far below this and travel
+    // one per message; bulk snapshots never include them.
+    maxHttpBufferSize: 1e6,
   });
 
   // HordeMart sale messages are signed over their exact bytes too, so this
@@ -158,6 +183,13 @@ async function start() {
     socket.on("SYNC_MUTATE", ({ companyId, entity, action, id, payload }) => {
       if (companyId !== socket.data.businessId || socket.data.joinedCompanyId !== socket.data.businessId) return;
       if (!entity || !action || !id) return;
+      if (entity === "image") {
+        const problem = imageProblem(action, payload);
+        if (problem) {
+          socket.emit("SYNC_REJECTED", { entity, id, reason: problem });
+          return;
+        }
+      }
       if (entity === "product") noteProductChange(socket.data.businessId);
 
       io.to(`company_${socket.data.businessId}`).except(socket.id).emit("SYNC_EVENT", {
@@ -189,7 +221,10 @@ async function start() {
       // that stub; only flip `deleted` and leave the rest of the record
       // as it last was.
       const snapshotUpdate =
-        action === "delete"
+        action === "delete" && entity === "image"
+          ? // A deleted image keeps no bytes on the server, only the tombstone.
+            { $set: { deleted: true, payload: { id, deleted: true }, updatedAt: new Date() } }
+          : action === "delete"
           ? { $set: { deleted: true, updatedAt: new Date() }, $setOnInsert: { payload: payload || { id } } }
           : { $set: { payload, deleted: false, updatedAt: new Date(payload?.updatedAt || Date.now()) } };
 
@@ -245,6 +280,17 @@ async function start() {
           }
 
           socket.emit("STATE_OFFERED", { entities, fromSocketId: "server" });
+
+          // Then each image on its own, so no one message grows with the
+          // number of pictures. Same SYNC_EVENT a live upload arrives as.
+          const images = EntitySnapshot.find({
+            businessId: socket.data.businessId,
+            entity: "image",
+            deleted: { $ne: true },
+          }).lean().cursor();
+          for await (const row of images) {
+            socket.emit("SYNC_EVENT", { entity: "image", action: "update", payload: row.payload });
+          }
         } catch (err) {
           console.error(`[sync] failed to build snapshot for ${socket.data.businessId}`, err);
         }

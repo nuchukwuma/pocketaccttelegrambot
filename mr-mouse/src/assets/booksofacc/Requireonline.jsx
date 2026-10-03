@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 import { getCachedSubscriptionEntitlement } from "../useSubscription";
-import { COLORS } from "../theme";
+import { tokenColor } from "../theme/tokens";
 
 
 function isPaidOfflineEntitlementValid(entitlement) {
@@ -35,13 +35,13 @@ export default function RequireOnline({ children }) {
     return (
       <div
         className="min-h-screen w-full flex flex-col items-center justify-center gap-4 px-6 text-center"
-        style={{ background: COLORS.paper }}
+        style={{ background: tokenColor("paper") }}
       >
-        <WifiOff size={32} color={COLORS.clay} />
-        <h2 className="text-lg font-semibold" style={{ color: COLORS.ink }}>
+        <WifiOff size={32} style={{ color: tokenColor("clay") }} />
+        <h2 className="text-lg font-semibold" style={{ color: tokenColor("ink") }}>
           No internet connection
         </h2>
-        <p className="text-sm max-w-xs" style={{ color: `${COLORS.ink}88` }}>
+        <p className="text-sm max-w-xs" style={{ color: tokenColor("ink", 53) }}>
           Connect to Wi-Fi or mobile data to continue. Active subscribers can use
           previously synced records offline until their paid period expires.
         </p>

@@ -81,7 +81,7 @@ export default function Ledger({ onNavigate, params }) {
         <div className="ledger-view">
           {!account ? (
             <>
-              <div className="mb-5 flex items-center gap-2.5 rounded-md border border-rule bg-white px-4 min-h-[44px]">
+              <div className="mb-5 flex items-center gap-2.5 rounded-md border border-rule bg-surface px-4 min-h-tap">
                 <Search size={16} className="text-ink/40 shrink-0" />
                 <label htmlFor="ledger-search" className="sr-only">
                   Search accounts

@@ -18,7 +18,7 @@ import {
   Flame,
   Sparkles,
 } from "lucide-react";
-import { COLORS } from "../theme";
+import { tokenColor } from "../theme/tokens";
 import { useLedger } from "../booksofacc/Ledgercontext";
 import { GlobalStyle, TopNav, AnimatedFigure, formatMoney, formatDate } from "../booksofacc/ui.jsx";
 import DashboardHero from "./DashboardHero";
@@ -429,7 +429,7 @@ export default function Dashboard({ onNavigate, companyId }) {
         {/* Business analytics */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-xl text-ink">Analytics</h2>
-          <div className="inline-flex rounded-lg border border-rule bg-white p-1">
+          <div className="inline-flex rounded-lg border border-rule bg-surface p-1">
             <PeriodButton active={period === "week"} onClick={() => setPeriod("week")} label="Week" />
             <PeriodButton active={period === "month"} onClick={() => setPeriod("month")} label="Month" />
           </div>
@@ -477,18 +477,18 @@ export default function Dashboard({ onNavigate, companyId }) {
           <h2 className="font-display text-xl text-ink">Recent activity</h2>
           <button
             onClick={() => onNavigate("book-page", { book: "cashbook" })}
-            className="font-body text-[13px] font-medium text-action hover:underline min-h-[44px]"
+            className="font-body text-label font-medium text-action hover:underline min-h-tap"
           >
             View books
           </button>
         </div>
 
         {recent.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-rule bg-white/60 px-6 py-12 text-center">
+          <div className="rounded-lg border border-dashed border-rule bg-on-canvas/60 px-6 py-12 text-center">
             <p className="font-body text-sm text-ink/50">No entries yet — add your first transaction to get started.</p>
           </div>
         ) : (
-          <div className="rounded-lg border border-rule bg-white overflow-hidden">
+          <div className="rounded-lg border border-rule bg-surface overflow-hidden">
             <div className="divide-y divide-rule">
               {recent.map((t) => (
                 <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3.5">
@@ -496,7 +496,7 @@ export default function Dashboard({ onNavigate, companyId }) {
                     <p className="font-body text-sm text-ink truncate">
                       {t.description || t.productName || t.party || "Entry"}
                     </p>
-                    <p className="font-body text-[13px] text-ink-soft mt-0.5">
+                    <p className="font-body text-label text-ink-soft mt-0.5">
                       {formatDate(t.date)} · {labelFor(t)}
                     </p>
                   </div>
@@ -529,7 +529,7 @@ function StreakBadge({ streak }) {
   if (!streak || streak.current === 0) {
     return (
       <div
-        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border border-rule bg-white text-ink/40"
+        className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border border-rule bg-surface text-ink/40"
         title="Record something today to start a streak"
       >
         <Flame size={13} />
@@ -543,7 +543,7 @@ function StreakBadge({ streak }) {
   return (
     <div
       className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border ${
-        lit ? "border-amber/30 bg-amber/10 text-amber-deep" : "border-ink/10 bg-white text-ink/60"
+        lit ? "border-amber/30 bg-amber/10 text-amber-deep" : "border-ink/10 bg-surface text-ink/60"
       }`}
       title={
         lit
@@ -559,16 +559,16 @@ function StreakBadge({ streak }) {
 
 function ConnectionBadge({ status, bootstrapped }) {
   const map = {
-    connected: { icon: Wifi, label: "Live", color: COLORS.moss },
-    connecting: { icon: Loader2, label: "Connecting…", color: `${COLORS.ink}88`, spin: true },
-    disconnected: { icon: WifiOff, label: "Offline", color: COLORS.clay },
+    connected: { icon: Wifi, label: "Live", color: tokenColor("moss") },
+    connecting: { icon: Loader2, label: "Connecting…", color: tokenColor("ink", 53), spin: true },
+    disconnected: { icon: WifiOff, label: "Offline", color: tokenColor("clay") },
   };
   const cfg = map[status] || map.connecting;
   const Icon = cfg.icon;
 
   return (
     <div
-      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border border-rule bg-white"
+      className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border border-rule bg-surface"
       style={{ color: cfg.color }}
       title={bootstrapped ? "Initial sync complete" : "Hydrating local data…"}
     >
@@ -601,7 +601,7 @@ function QuickLearningModal({ tips, businessId }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-lg border border-rule bg-white p-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg rounded-lg border border-rule bg-surface p-6 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-ink/8 mb-5">
           <div className="flex items-center gap-2.5">
             <span className="w-8 h-8 rounded-full bg-moss/12 flex items-center justify-center">
@@ -619,7 +619,7 @@ function QuickLearningModal({ tips, businessId }) {
         </div>
 
         <div className="min-h-[120px]">
-          <p className="font-body text-[13px] text-ink-soft mb-1">
+          <p className="font-body text-label text-ink-soft mb-1">
             Tip {index + 1} of {tips.length}
           </p>
           <h3 className="font-display text-xl text-ink mb-2">{current.term}</h3>
@@ -657,7 +657,7 @@ function QuickLearningModal({ tips, businessId }) {
             </button>
             <button
               onClick={close}
-              className="ml-2 rounded-lg bg-ink px-4 py-2 font-body text-xs font-medium text-white hover:bg-action-deep transition-colors"
+              className="ml-2 rounded-lg bg-canvas px-4 py-2 font-body text-xs font-medium text-on-action hover:bg-action-deep transition-colors"
             >
               Got it
             </button>
@@ -686,15 +686,15 @@ function NavCard({ icon: Icon, title, desc, onClick, highlight, badge, hasDeadli
         wide ? "sm:col-span-2" : ""
       } ${
         highlight
-          ? "border-action bg-action text-white hover:bg-action-deep hover:border-action-deep"
+          ? "border-action bg-action text-on-action hover:bg-action-deep hover:border-action-deep"
           : hasDeadlineAlert
           ? "border-clay/40 bg-clay/5 hover:border-clay"
-          : "border-rule bg-white hover:border-action/50"
+          : "border-rule bg-surface hover:border-action/50"
       }`}
     >
       {!!badge && (
         <span
-          className={`absolute top-4 right-4 min-w-[20px] h-5 px-1.5 rounded-full text-white text-[11px] font-mono flex items-center justify-center ${
+          className={`absolute top-4 right-4 min-w-[20px] h-5 px-1.5 rounded-full text-on-action text-tiny font-mono flex items-center justify-center ${
             hasDeadlineAlert ? "bg-clay animate-pulse" : "bg-clay"
           }`}
         >
@@ -702,12 +702,12 @@ function NavCard({ icon: Icon, title, desc, onClick, highlight, badge, hasDeadli
         </span>
       )}
       <Icon size={22} className={highlight ? "text-moss-lift mb-3" : hasDeadlineAlert ? "text-clay mb-3" : "text-moss mb-3"} />
-      <h3 className={`font-display text-lg mb-1.5 flex items-center gap-1.5 ${highlight ? "text-white" : "text-ink"}`}>
+      <h3 className={`font-display text-lg mb-1.5 flex items-center gap-1.5 ${highlight ? "text-on-action" : "text-ink"}`}>
         {title}
         {hasDeadlineAlert && <AlertCircle size={16} className="text-clay" />}
         <ArrowRight size={15} className={highlight ? "text-moss-lift" : "text-ink/30"} />
       </h3>
-      <p className={`font-body text-sm ${highlight ? "text-white/70" : hasDeadlineAlert ? "text-clay" : "text-ink/55"}`}>{desc}</p>
+      <p className={`font-body text-sm ${highlight ? "text-on-action/70" : hasDeadlineAlert ? "text-clay" : "text-ink/55"}`}>{desc}</p>
     </button>
   );
 }
@@ -718,11 +718,11 @@ function WeekPulseCard({ pulse }) {
   const delta = salesRevenue - prevSalesRevenue;
 
   return (
-    <div className="rounded-lg border border-rule bg-white p-5 sm:p-6 mb-8">
+    <div className="rounded-lg border border-rule bg-surface p-5 sm:p-6 mb-8">
       <div className="flex flex-wrap items-baseline justify-between gap-4 mb-5">
         <h2 className="font-display text-lg font-semibold text-ink">This week</h2>
         {hasPrev && (
-          <span className="font-body text-[13px] text-ink-soft">
+          <span className="font-body text-label text-ink-soft">
             {delta >= 0 ? "Up" : "Down"}{" "}
             <span className={`font-mono ${delta >= 0 ? "text-moss" : "text-clay"}`}>
               {formatMoney(Math.abs(delta))}
@@ -745,7 +745,7 @@ function MiniStat({ label, value, tone }) {
   const toneClass = tone === "positive" ? "text-moss" : tone === "negative" ? "text-clay" : "text-ink";
   return (
     <div>
-      <p className="font-body text-[13px] text-ink-soft mb-1">{label}</p>
+      <p className="font-body text-label text-ink-soft mb-1">{label}</p>
       <p className={`font-mono text-lg rule-sum pb-1.5 ${toneClass}`}>{value}</p>
     </div>
   );
@@ -755,8 +755,8 @@ function PeriodButton({ active, onClick, label }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-md px-4 min-h-[40px] font-body text-[13px] font-medium transition-colors ${
-        active ? "bg-action text-white" : "text-ink-soft hover:text-ink"
+      className={`rounded-md px-4 min-h-[40px] font-body text-label font-medium transition-colors ${
+        active ? "bg-action text-on-action" : "text-ink-soft hover:text-ink"
       }`}
     >
       {label}
@@ -767,7 +767,7 @@ function PeriodButton({ active, onClick, label }) {
 function CashflowCard({ analytics }) {
   const { cashDays, totalInflow, totalOutflow, netCashflow, maxDayValue } = analytics;
   return (
-    <div className="rounded-lg border border-rule bg-white p-5">
+    <div className="rounded-lg border border-rule bg-surface p-5">
       <h3 className="font-display text-base font-semibold text-ink mb-4">Cashflow</h3>
 
       <div className="grid grid-cols-3 gap-4 mb-5">
@@ -777,7 +777,7 @@ function CashflowCard({ analytics }) {
       </div>
 
       {cashDays.length === 0 ? (
-        <p className="font-body text-[13px] text-ink-soft">No cash or bank movement in this period yet.</p>
+        <p className="font-body text-label text-ink-soft">No cash or bank movement in this period yet.</p>
       ) : (
         <CashflowChart days={cashDays} maxDayValue={maxDayValue} />
       )}
@@ -788,21 +788,21 @@ function CashflowCard({ analytics }) {
 function ExpenseBreakdownCard({ analytics, onNavigate }) {
   const { expenseBreakdown, totalExpenses } = analytics;
   return (
-    <div className="rounded-lg border border-rule bg-white p-5 flex flex-col">
+    <div className="rounded-lg border border-rule bg-surface p-5 flex flex-col">
       <div className="flex items-baseline justify-between gap-3 mb-4">
         <h3 className="font-display text-base font-semibold text-ink">Where the money went</h3>
-        <span className="font-mono text-[13px] text-ink-soft">{formatMoney(totalExpenses)}</span>
+        <span className="font-mono text-label text-ink-soft">{formatMoney(totalExpenses)}</span>
       </div>
 
       {expenseBreakdown.length === 0 ? (
-        <p className="font-body text-[13px] text-ink-soft">No expenses recorded in this period yet.</p>
+        <p className="font-body text-label text-ink-soft">No expenses recorded in this period yet.</p>
       ) : (
         <ExpenseBars items={expenseBreakdown} />
       )}
 
       <button
         onClick={() => onNavigate("book-page", { book: "pnl" })}
-        className="pt-4 self-start font-body text-[13px] font-medium text-action hover:underline min-h-[44px]"
+        className="pt-4 self-start font-body text-label font-medium text-action hover:underline min-h-tap"
       >
         View P&L
       </button>
@@ -814,12 +814,12 @@ function StockPerformanceCard({ title, icon: Icon, tone, items, emptyText, onNav
   const color = tone === "positive" ? "text-moss" : "text-clay";
   const bg = tone === "positive" ? "bg-moss/10" : "bg-clay/10";
   return (
-    <div className="rounded-lg border border-rule bg-white p-5">
+    <div className="rounded-lg border border-rule bg-surface p-5">
       <div className="flex items-center gap-2 mb-4">
         <span className={`w-7 h-7 rounded-full flex items-center justify-center ${bg}`}>
           <Icon size={14} className={color} />
         </span>
-        <p className="font-body text-[13px] text-ink-soft">{title}</p>
+        <p className="font-body text-label text-ink-soft">{title}</p>
       </div>
 
       {items.length === 0 ? (
@@ -830,7 +830,7 @@ function StockPerformanceCard({ title, icon: Icon, tone, items, emptyText, onNav
             <div key={p.id} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-body text-sm text-ink truncate">{p.name}</p>
-                <p className="font-body text-[13px] text-ink-soft">{p.unitsSold} sold · {p.stock} in stock</p>
+                <p className="font-body text-label text-ink-soft">{p.unitsSold} sold · {p.stock} in stock</p>
               </div>
               <span className="font-mono text-sm text-ink shrink-0">{formatMoney(p.revenue)}</span>
             </div>
@@ -840,7 +840,7 @@ function StockPerformanceCard({ title, icon: Icon, tone, items, emptyText, onNav
 
       <button
         onClick={() => onNavigate("book-page", { book: "inventory" })}
-        className="mt-4 font-body text-[13px] font-medium text-action hover:underline min-h-[44px]"
+        className="mt-4 font-body text-label font-medium text-action hover:underline min-h-tap"
       >
         View inventory
       </button>
@@ -854,9 +854,9 @@ function SnapshotStat({ label, value, amount, tone, onClick }) {
   return (
     <Wrapper
       onClick={onClick}
-      className={`w-full text-left rounded-lg border border-rule bg-white px-5 py-4 ${onClick ? "hover:border-action/50 transition-colors" : ""}`}
+      className={`w-full text-left rounded-lg border border-rule bg-surface px-5 py-4 ${onClick ? "hover:border-action/50 transition-colors" : ""}`}
     >
-      <p className="font-body text-[13px] text-ink-soft mb-1">{label}</p>
+      <p className="font-body text-label text-ink-soft mb-1">{label}</p>
       <p className={`font-mono text-2xl rule-sum pb-1.5 ${color}`}>
         {amount === undefined ? value : <AnimatedFigure value={amount} format={formatMoney} />}
       </p>

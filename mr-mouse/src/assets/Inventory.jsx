@@ -281,7 +281,7 @@ export default function InventoryPage({ onNavigate }) {
 
             {/* Search */}
             <div className="mb-5">
-              <div className="flex items-center gap-2.5 rounded-lg border border-rule bg-white px-4 py-3">
+              <div className="flex items-center gap-2.5 rounded-lg border border-rule bg-surface px-4 py-3">
                 <Search size={16} className="text-ink/40 shrink-0" />
                 <input
                   value={query}
@@ -306,7 +306,7 @@ export default function InventoryPage({ onNavigate }) {
                   !query && (
                     <button
                       onClick={() => setShowAddModal(true)}
-                      className="inline-flex items-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium px-5 py-2.5 hover:bg-action-deep transition-colors"
+                      className="inline-flex items-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium px-5 py-2.5 hover:bg-action-deep transition-colors"
                     >
                       <Plus size={15} /> Add a product
                     </button>
@@ -314,8 +314,8 @@ export default function InventoryPage({ onNavigate }) {
                 }
               />
             ) : (
-              <div className="rounded-lg border border-rule bg-white overflow-hidden">
-                <div className="hidden sm:grid grid-cols-[2.2fr_1fr_1fr_auto] gap-4 px-5 py-3 bg-paper-sunk font-body text-[13px] text-ink-soft">
+              <div className="rounded-lg border border-rule bg-surface overflow-hidden">
+                <div className="hidden sm:grid grid-cols-[2.2fr_1fr_1fr_auto] gap-4 px-5 py-3 bg-paper-sunk font-body text-label text-ink-soft">
                   <SortHeader label="Product" active={sortKey === "name"} onClick={() => toggleSort("name")} />
                   <SortHeader label="In stock" active={sortKey === "stock"} onClick={() => toggleSort("stock")} />
                   <SortHeader label="Last activity" active={sortKey === "activity"} onClick={() => toggleSort("activity")} />
@@ -357,7 +357,7 @@ export default function InventoryPage({ onNavigate }) {
         <button
           onClick={() => openAdjustFor(selectedProduct ? selectedProduct.id : "")}
           title="Add or remove stock from an existing product"
-          className="flex items-center gap-2 rounded-full bg-white border border-ink/15 text-ink pl-4 pr-5 py-3 hover:border-action hover:text-moss transition-colors"
+          className="flex items-center gap-2 rounded-full bg-surface border border-ink/15 text-ink pl-4 pr-5 py-3 hover:border-action hover:text-moss transition-colors"
         >
           <Repeat size={17} className="text-moss" />
           <span className="font-body text-sm font-medium whitespace-nowrap">Adjust stock</span>
@@ -368,7 +368,7 @@ export default function InventoryPage({ onNavigate }) {
             setShowAddModal(true);
           }}
           title="Create a stock record for a new product"
-          className="flex items-center gap-2 rounded-full bg-action text-white pl-4 pr-5 py-3.5 hover:bg-action-deep transition-colors"
+          className="flex items-center gap-2 rounded-full bg-action text-on-action pl-4 pr-5 py-3.5 hover:bg-action-deep transition-colors"
         >
           <PackagePlus size={19} />
           <span className="font-body text-sm font-medium whitespace-nowrap">New product</span>
@@ -411,7 +411,7 @@ export default function InventoryPage({ onNavigate }) {
                 onChange={(e) => setProductField("sku", e.target.value)}
               />
             </Field>
-            <p className="font-body text-[12px] text-ink/45 -mt-3">
+            <p className="font-body text-caption text-ink/45 -mt-3">
               Selling on HordeMart? Use the same code there to keep stock in step.
             </p>
             <Field icon={Calendar} label="Date loaded" error={formErrors.date}>
@@ -434,7 +434,7 @@ export default function InventoryPage({ onNavigate }) {
             </Field>
             <button
               type="submit"
-              className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
+              className="mt-2 w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
             >
               Create stock record
             </button>
@@ -448,7 +448,7 @@ export default function InventoryPage({ onNavigate }) {
           {adjustStep === "select" && (
             <div className="space-y-5">
               <div>
-                <label className="font-body text-[13px] text-ink-soft mb-2 block">
+                <label className="font-body text-label text-ink-soft mb-2 block">
                   What's happening to this stock?
                 </label>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -458,13 +458,13 @@ export default function InventoryPage({ onNavigate }) {
                     aria-pressed={adjustForm.type === "load"}
                     className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-5 transition-all ${
                       adjustForm.type === "load"
-                        ? "border-moss bg-moss text-white"
-                        : "border-rule bg-white text-ink/45 hover:border-ink/25"
+                        ? "border-moss bg-moss text-on-action"
+                        : "border-rule bg-surface text-ink/45 hover:border-ink/25"
                     }`}
                   >
                     <PackagePlus size={22} />
                     <span className="font-body text-sm font-semibold">Stock In</span>
-                    <span className={`font-body text-[11px] text-center px-2 ${adjustForm.type === "load" ? "text-white/80" : "text-ink/40"}`}>
+                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "load" ? "text-on-canvas/80" : "text-ink/40"}`}>
                       New goods arrived
                     </span>
                   </button>
@@ -474,13 +474,13 @@ export default function InventoryPage({ onNavigate }) {
                     aria-pressed={adjustForm.type === "offload"}
                     className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-5 transition-all ${
                       adjustForm.type === "offload"
-                        ? "border-clay bg-clay text-white"
-                        : "border-rule bg-white text-ink/45 hover:border-ink/25"
+                        ? "border-clay bg-clay text-on-action"
+                        : "border-rule bg-surface text-ink/45 hover:border-ink/25"
                     }`}
                   >
                     <PackageMinus size={22} />
                     <span className="font-body text-sm font-semibold">Stock Out</span>
-                    <span className={`font-body text-[11px] text-center px-2 ${adjustForm.type === "offload" ? "text-white/80" : "text-ink/40"}`}>
+                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "offload" ? "text-on-canvas/80" : "text-ink/40"}`}>
                       Sold or removed
                     </span>
                   </button>
@@ -495,8 +495,8 @@ export default function InventoryPage({ onNavigate }) {
                   !adjustForm.type
                     ? "bg-ink/8 text-ink/35 cursor-not-allowed"
                     : adjustForm.type === "load"
-                    ? "bg-moss text-white hover:bg-ink"
-                    : "bg-clay text-white hover:bg-ink"
+                    ? "bg-moss text-on-action hover:bg-canvas"
+                    : "bg-clay text-on-action hover:bg-canvas"
                 }`}
               >
                 {adjustForm.type === "offload" ? "Remove from stock" : "Add to stock"}
@@ -510,7 +510,7 @@ export default function InventoryPage({ onNavigate }) {
               <button
                 type="button"
                 onClick={() => setAdjustStep("select")}
-                className="flex items-center gap-1.5 font-body text-[13px] text-ink-soft hover:text-ink -mt-1"
+                className="flex items-center gap-1.5 font-body text-label text-ink-soft hover:text-ink -mt-1"
               >
                 <ArrowLeft size={12} /> Change movement type
               </button>
@@ -594,8 +594,8 @@ export default function InventoryPage({ onNavigate }) {
 
               <button
                 type="submit"
-                className={`mt-2 w-full flex items-center justify-center gap-2 rounded-lg text-white font-body text-sm font-medium py-3 transition-colors ${
-                  adjustForm.type === "load" ? "bg-moss hover:bg-ink" : "bg-clay hover:bg-ink"
+                className={`mt-2 w-full flex items-center justify-center gap-2 rounded-lg text-on-action font-body text-sm font-medium py-3 transition-colors ${
+                  adjustForm.type === "load" ? "bg-moss hover:bg-canvas" : "bg-clay hover:bg-canvas"
                 }`}
               >
                 Save and update inventory
@@ -620,7 +620,7 @@ export default function InventoryPage({ onNavigate }) {
               <p className="font-body text-sm text-ink/50 mb-6">Inventory has been updated.</p>
 
               <div className="rounded-xl border border-ink/10 bg-paper-sunk px-5 py-4 mb-6">
-                <p className="font-body text-[13px] text-ink-soft mb-1">New total in stock</p>
+                <p className="font-body text-label text-ink-soft mb-1">New total in stock</p>
                 <p className="font-display text-3xl text-ink">{savedSummary.newTotal}</p>
               </div>
 
@@ -635,7 +635,7 @@ export default function InventoryPage({ onNavigate }) {
                 <button
                   type="button"
                   onClick={closeAdjustModal}
-                  className="flex-1 rounded-lg bg-action text-white font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors"
+                  className="flex-1 rounded-lg bg-action text-on-action font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors"
                 >
                   Done
                 </button>
@@ -694,10 +694,10 @@ function ProductLedgerView({ product, computeStock, onBack, onAdjust, onSaveSku 
         <div>
           <h1 className="font-display text-3xl text-ink mb-1.5">{product.name}</h1>
           {product.description && <p className="font-body text-sm text-ink/55 max-w-lg">{product.description}</p>}
-          <p className="font-mono text-[11px] text-ink/40 mt-2">Record opened {formatDate(product.createdAt)}</p>
+          <p className="font-mono text-tiny text-ink/40 mt-2">Record opened {formatDate(product.createdAt)}</p>
           {editingSku ? (
             <form onSubmit={submitSku} className="mt-3 flex flex-wrap items-center gap-2">
-              <label htmlFor="product-sku" className="font-body text-[13px] text-ink-soft">
+              <label htmlFor="product-sku" className="font-body text-label text-ink-soft">
                 Item code
               </label>
               <input
@@ -709,16 +709,16 @@ function ProductLedgerView({ product, computeStock, onBack, onAdjust, onSaveSku 
                 onChange={(e) => setSkuDraft(e.target.value)}
                 aria-invalid={skuError ? "true" : undefined}
               />
-              <button type="submit" className="rounded-lg bg-action text-white text-[13px] font-medium px-3 py-1.5 hover:bg-action-deep">
+              <button type="submit" className="rounded-lg bg-action text-on-action text-label font-medium px-3 py-1.5 hover:bg-action-deep">
                 Save
               </button>
-              <button type="button" onClick={() => setEditingSku(false)} className="text-[13px] text-ink-soft hover:text-ink px-2">
+              <button type="button" onClick={() => setEditingSku(false)} className="text-label text-ink-soft hover:text-ink px-2">
                 Cancel
               </button>
               {skuError && <p className="w-full font-body text-xs text-clay">{skuError}</p>}
             </form>
           ) : (
-            <p className="font-body text-[13px] text-ink-soft mt-2 flex items-center gap-1.5">
+            <p className="font-body text-label text-ink-soft mt-2 flex items-center gap-1.5">
               <Tag size={12} />
               {product.sku ? <span className="font-mono text-ink">{product.sku}</span> : <span>No item code</span>}
               <button type="button" onClick={startSkuEdit} className="underline text-action ml-1">
@@ -728,21 +728,21 @@ function ProductLedgerView({ product, computeStock, onBack, onAdjust, onSaveSku 
           )}
         </div>
 
-        <div className="rounded-lg border border-rule bg-white px-5 py-4 text-right shrink-0">
-          <p className="font-body text-[13px] text-ink-soft mb-1">Current stock</p>
+        <div className="rounded-lg border border-rule bg-surface px-5 py-4 text-right shrink-0">
+          <p className="font-body text-label text-ink-soft mb-1">Current stock</p>
           <p className={`font-display text-3xl ${stock <= 5 ? "text-clay" : "text-ink"}`}>{stock}</p>
         </div>
       </div>
 
       <button
         onClick={onAdjust}
-        className="mb-6 inline-flex items-center gap-2 rounded-lg border border-ink/15 bg-white px-4 py-2.5 font-body text-sm text-ink hover:border-action hover:text-moss transition-colors"
+        className="mb-6 inline-flex items-center gap-2 rounded-lg border border-ink/15 bg-surface px-4 py-2.5 font-body text-sm text-ink hover:border-action hover:text-moss transition-colors"
       >
         <Repeat size={15} /> Record stock in / out
       </button>
 
-      <div className="rounded-lg border border-rule bg-white overflow-hidden mb-10">
-        <div className="hidden sm:grid grid-cols-[1fr_1fr_1fr_1fr_1.4fr] gap-4 px-5 py-3 bg-paper-sunk font-body text-[13px] text-ink-soft">
+      <div className="rounded-lg border border-rule bg-surface overflow-hidden mb-10">
+        <div className="hidden sm:grid grid-cols-[1fr_1fr_1fr_1fr_1.4fr] gap-4 px-5 py-3 bg-paper-sunk font-body text-label text-ink-soft">
           <span>Date</span>
           <span>Movement</span>
           <span>Quantity</span>
@@ -757,7 +757,7 @@ function ProductLedgerView({ product, computeStock, onBack, onAdjust, onSaveSku 
               <div key={e.id} className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_1fr_1fr_1.4fr] gap-2 sm:gap-4 items-center px-5 py-3.5">
                 <span className="font-body text-sm text-ink">{formatDate(e.date)}</span>
                 <span
-                  className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 font-body text-[12px] font-medium ${
+                  className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 font-body text-caption font-medium ${
                     isLoad ? "bg-moss/12 text-moss" : "bg-clay/12 text-clay"
                   }`}
                 >

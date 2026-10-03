@@ -3,6 +3,8 @@ import React, { createContext, useContext, useState, useMemo, useCallback, useEf
 import { resetConsentCache } from "../legal/useConsents";
 import { uid, todayISO } from "./ui.jsx";
 import { useCompanySync } from "../components/useCompanySync";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "../components/Db";
 import { getAuthHeaders, clearAuthToken } from "../auth";
 
 const LedgerCtx = createContext(null);
@@ -117,9 +119,22 @@ export function LedgerProvider({ children }) {
     invoices,
     deadlines = [],
     mutate,
+    saveImage,
+    deleteImage,
   } = useCompanySync(companyId);
 
   const business = syncedBusiness || null;
+
+  /* ---------- Per-business preferences (theme, layout, tutorial…) ----------
+     Stored in Dexie's `prefs` table and synced like any other record, so a
+     choice made on one device follows the business to the others. */
+  const setPref = useCallback(
+    (key, value) => {
+      if (!companyId) return null;
+      return mutate("pref", "update", { id: `${companyId}:${key}`, key, value });
+    },
+    [companyId, mutate]
+  );
 
   const setBusiness = useCallback((profile) => {
     setCurrentUser(profile);
@@ -644,6 +659,9 @@ export function LedgerProvider({ children }) {
     authReady,
     logout,
     mutate,
+    saveImage,
+    deleteImage,
+    setPref,
     connectionStatus,
     bootstrapped,
     requestStateFromPeers,
@@ -689,3 +707,10 @@ export function useLedger() {
 }
 
 export { emptyPendingOrder };
+/** A per-business preference, live: re-renders when it changes on any device. */
+export function usePref(key, fallback = null) {
+  const { business } = useLedger();
+  const companyId = business?.id;
+  const row = useLiveQuery(() => (companyId ? db.prefs.get(`${companyId}:${key}`) : undefined), [companyId, key]);
+  return row && !row.deleted ? row.value : fallback;
+}

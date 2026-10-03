@@ -73,6 +73,47 @@
   /* ---- Caution --------------------------------------------- */
   --color-amber: #c99a2e; /* HordeMart brass */
   --color-amber-deep: #8f6200; /* text on an amber-tinted surface */
+
+  /* ---- Surfaces and the text that sits on them -------------- */
+  /* Separate jobs that used to share the literal "white", so a dark
+     theme can move each one without the others:
+       surface    cards, panels, inputs (was bg-white)
+       canvas     the dark bands: top bar, dashboard hero, total rows.
+                  Separate from ink (body text) so a dark theme can make
+                  text light while the bands stay dark.
+       on-canvas  text and lines on the canvas
+       on-action  text on action / money-coloured buttons
+       scrim      the dimmed layer behind a modal */
+  --color-surface: #ffffff;
+  --color-canvas: #161a33;
+  --color-on-canvas: #ffffff;
+  --color-on-action: #ffffff;
+  --color-scrim: rgb(22 26 51 / 0.82);
+
+  /* ---- Type scale ------------------------------------------- */
+  /* The small sizes the app actually uses, named, so a theme (or a
+     "larger text" option) changes them in one place. */
+  --text-micro: 0.625rem; /* 10px */
+  --text-tiny: 0.6875rem; /* 11px */
+  --text-caption: 0.75rem; /* 12px */
+  --text-label: 0.8125rem; /* 13px */
+
+  /* ---- Sizes and radii ---------------------------------------- */
+  --spacing-tap: 44px; /* minimum touch target */
+  --spacing-nav: 56px; /* top bar height */
+  --radius-xs: 2px;
+}
+
+/* Font stacks as tokens, so a theme can swap a face in one place. */
+:root {
+  --font-display: 'Unbounded', 'Trebuchet MS', sans-serif;
+  --font-body: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
 }
 
 /* ===============================================================
@@ -93,15 +134,15 @@
 .font-display {
   /* HordeMart's display face. Wider than Syne, so it is set a touch
      tighter. */
-  font-family: 'Unbounded', 'Trebuchet MS', sans-serif;
+  font-family: var(--font-display);
   letter-spacing: -0.03em;
 }
 .font-body {
   /* HordeMart's text face. */
-  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
 }
 .font-mono {
-  font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 
 /* Every figure in this app lines up in a column somewhere. Tabular

@@ -84,7 +84,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4">
       {telegramConsent.prompt}
-      <div className="w-full max-w-md rounded-lg bg-white shadow-2xl border border-rule p-6">
+      <div className="w-full max-w-md rounded-lg bg-surface shadow-2xl border border-rule p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="rounded-full bg-paper-sunk p-2">
@@ -113,7 +113,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
           <button
             onClick={viewStatement}
             disabled={Boolean(busy)}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white py-2.5 text-sm font-medium disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action py-2.5 text-sm font-medium disabled:opacity-50"
           >
             <FileText size={15} />
             {busy === "view" ? "Opening…" : "View statement"}
@@ -140,7 +140,7 @@ export default function MonthlyStatementPopup({ business, onClose }) {
 function Metric({ label, value }) {
   return (
     <div className="rounded-lg bg-paper border border-ink/8 p-3">
-      <div className="font-body text-[13px] text-ink-soft">{label}</div>
+      <div className="font-body text-label text-ink-soft">{label}</div>
       <div className="font-body text-sm text-ink mt-1">{value}</div>
     </div>
   );

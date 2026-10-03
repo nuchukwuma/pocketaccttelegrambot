@@ -4,7 +4,7 @@ import React from "react";
    exactly what is agreed to. A button stays disabled until it is ticked. */
 export default function ConsentCheckbox({ id, checked, onChange, children }) {
   return (
-    <label htmlFor={id} className="flex items-start gap-3 cursor-pointer font-body text-[13px] leading-relaxed text-ink-soft">
+    <label htmlFor={id} className="flex items-start gap-3 cursor-pointer font-body text-label leading-relaxed text-ink-soft">
       <input
         id={id}
         type="checkbox"

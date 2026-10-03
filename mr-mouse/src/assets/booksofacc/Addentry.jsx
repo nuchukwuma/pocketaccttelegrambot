@@ -200,7 +200,7 @@ export default function AddEntry({ onNavigate }) {
               </p>
               <button
                 onClick={() => onNavigate("book-page", { book: bookKeyFor(saved.destinationBook) })}
-                className="font-body text-[13px] font-medium text-action hover:underline mt-1.5 inline-block"
+                className="font-body text-label font-medium text-action hover:underline mt-1.5 inline-block"
               >
                 View that book →
               </button>
@@ -208,10 +208,10 @@ export default function AddEntry({ onNavigate }) {
           </div>
         )}
 
-        <form onSubmit={submit} noValidate className="rounded-lg border border-rule bg-white p-6 sm:p-8 space-y-6">
+        <form onSubmit={submit} noValidate className="rounded-lg border border-rule bg-surface p-6 sm:p-8 space-y-6">
           {/* Category selector */}
           <div className={errors.category ? "ledger-field-error" : ""}>
-            <label className="font-body text-[13px] text-ink-soft mb-2 block">
+            <label className="font-body text-label text-ink-soft mb-2 block">
               What is this entry?
             </label>
             <div className="grid grid-cols-2 gap-2.5">
@@ -231,13 +231,13 @@ export default function AddEntry({ onNavigate }) {
                     }
                     className={`flex flex-col items-start gap-1 rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
                       active
-                        ? "border-moss bg-moss text-white"
-                        : "border-rule bg-white text-ink hover:border-ink/25"
+                        ? "border-moss bg-moss text-on-action"
+                        : "border-rule bg-surface text-ink hover:border-ink/25"
                     }`}
                   >
-                    <Icon size={18} className={active ? "text-white" : "text-moss"} />
+                    <Icon size={18} className={active ? "text-on-action" : "text-moss"} />
                     <span className="font-body text-sm font-semibold">{opt.label}</span>
-                    <span className={`font-body text-[11px] ${active ? "text-white/75" : "text-ink/45"}`}>{opt.desc}</span>
+                    <span className={`font-body text-tiny ${active ? "text-on-action/75" : "text-ink/45"}`}>{opt.desc}</span>
                   </button>
                 );
               })}
@@ -420,7 +420,7 @@ export default function AddEntry({ onNavigate }) {
               </div>
 
               {destinationBook && (
-                <p className="font-mono text-[11px] text-ink/40">
+                <p className="font-mono text-tiny text-ink/40">
                   This will post to the <span className="text-moss">{destinationBook}</span>
                   {isTrade && form.productName && form.productName !== "__new__" ? " and update inventory" : ""}.
                 </p>
@@ -428,7 +428,7 @@ export default function AddEntry({ onNavigate }) {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
               >
                 Save entry
               </button>
@@ -451,7 +451,7 @@ function bookKeyFor(destination) {
 function ToggleRow({ label, options, value, onChange }) {
   return (
     <div>
-      <label className="font-body text-[13px] text-ink-soft mb-2 block">{label}</label>
+      <label className="font-body text-label text-ink-soft mb-2 block">{label}</label>
       <div className="grid grid-cols-2 gap-2.5">
         {options.map((opt) => {
           const Icon = opt.icon;
@@ -464,8 +464,8 @@ function ToggleRow({ label, options, value, onChange }) {
               aria-pressed={active}
               className={`flex items-center justify-center gap-2 rounded-lg border-2 py-2.5 font-body text-sm transition-all ${
                 active
-                  ? "border-action bg-action text-white"
-                  : "border-rule bg-white text-ink/60 hover:border-ink/25"
+                  ? "border-action bg-action text-on-action"
+                  : "border-rule bg-surface text-ink/60 hover:border-ink/25"
               }`}
             >
               <Icon size={15} />

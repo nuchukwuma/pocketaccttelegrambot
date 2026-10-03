@@ -23,6 +23,7 @@ import SplashScreen from "./assets/components/SplashScreen";
 import { useSubscription, computeAccessState } from "./assets/useSubscription";
 import HordeMartLink, { isHordeMartLanding } from "./assets/integrations/HordeMartLink";
 import TermsGate from "./assets/legal/TermsGate";
+import DevHooks from "./assets/dev/DevHooks";
 
 const BOOK_PAGES = {
   cashbook: CashBook,
@@ -132,6 +133,7 @@ function AppShell() {
       <RequireDeviceSlot>
         <BillingReminderBanner onOpenBilling={() => onNavigate("settings")} />
         <AiAssistant onNavigate={onNavigate} />
+        {import.meta.env.DEV && <DevHooks />}
         {page === "book-page" ? (
           (() => {
             const BookComponent = BOOK_PAGES[params.book] || CashBook;

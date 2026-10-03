@@ -52,7 +52,7 @@ export function GlobalStyle() {
         border-bottom-width: 2px;
       }
       .ledger-field-error .ledger-input { border-bottom-color: var(--color-clay); }
-      select.ledger-input option { background-color: #FFFFFF; color: var(--color-ink); }
+      select.ledger-input option { background-color: var(--color-surface); color: var(--color-ink); }
 
       /* Keyboard focus has to be visible on every control, not just inputs. */
       :focus-visible {
@@ -100,16 +100,16 @@ export function TopNav({ business, current, onNavigate }) {
   const name = business?.businessName?.trim() || "Your business";
 
   return (
-    <div className="sticky top-0 z-30 bg-ink/97 backdrop-blur border-b border-white/10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-3 min-h-[56px]">
+    <div className="sticky top-0 z-30 bg-canvas/97 backdrop-blur border-b border-on-canvas/10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-3 min-h-nav">
         <button
           onClick={() => onNavigate("dashboard")}
-          className="flex items-center gap-2 shrink-0 min-h-[44px]"
+          className="flex items-center gap-2 shrink-0 min-h-tap"
         >
-          <div className="w-6 h-6 rounded-full border border-white/25 bg-white/10 flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full border border-on-canvas/25 bg-on-canvas/10 flex items-center justify-center">
             <div className="w-1.5 h-1.5 rounded-full bg-moss-lift" />
           </div>
-          <span className="font-display text-base font-semibold text-white hidden sm:inline">
+          <span className="font-display text-base font-semibold text-on-canvas hidden sm:inline">
             Mr Mouse
           </span>
         </button>
@@ -127,12 +127,12 @@ export function TopNav({ business, current, onNavigate }) {
                 disabled={disabled}
                 aria-current={active ? "page" : undefined}
                 title={disabled ? "Subscribe to regain access" : undefined}
-                className={`flex items-center gap-1.5 rounded-md px-3 min-h-[44px] font-body text-sm whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md px-3 min-h-tap font-body text-sm whitespace-nowrap transition-colors ${
                   disabled
-                    ? "text-white/25 cursor-not-allowed"
+                    ? "text-on-canvas/25 cursor-not-allowed"
                     : active
-                    ? "bg-white text-ink font-medium"
-                    : "text-white/65 hover:text-white hover:bg-white/10"
+                    ? "bg-surface text-ink font-medium"
+                    : "text-on-canvas/65 hover:text-on-canvas hover:bg-on-canvas/10"
                 }`}
               >
                 <Icon size={16} />
@@ -143,10 +143,10 @@ export function TopNav({ business, current, onNavigate }) {
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-body text-[13px] text-white/45 hidden md:inline truncate max-w-[160px]">{name}</span>
+          <span className="font-body text-label text-on-canvas/45 hidden md:inline truncate max-w-[160px]">{name}</span>
           <button
             onClick={logout}
-            className="flex items-center justify-center min-w-[44px] min-h-[44px] text-white/50 hover:text-white transition-colors"
+            className="flex items-center justify-center min-w-tap min-h-tap text-on-canvas/50 hover:text-on-canvas transition-colors"
             aria-label="Log out"
             title="Log out"
           >
@@ -173,25 +173,25 @@ export function PageHeader({ business, icon: Icon, title, subtitle, right }) {
   const industry = business?.industry?.trim();
 
   return (
-    <div className="relative bg-ink pb-9 pt-8 px-5 sm:px-8">
+    <div className="relative bg-canvas pb-9 pt-8 px-5 sm:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-2 mb-5">
           <Building2 size={14} className="text-moss-lift" />
-          <span className="font-body text-sm text-white/70">{name}</span>
+          <span className="font-body text-sm text-on-canvas/70">{name}</span>
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-white mb-2 flex items-center gap-2.5 text-balance">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-on-canvas mb-2 flex items-center gap-2.5 text-balance">
               {Icon && <Icon size={26} className="text-moss-lift shrink-0" />}
               {title}
             </h1>
-            {subtitle && <p className="font-body text-sm text-white/55 max-w-xl">{subtitle}</p>}
+            {subtitle && <p className="font-body text-sm text-on-canvas/55 max-w-xl">{subtitle}</p>}
           </div>
           {right}
         </div>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-1.5 font-body text-[13px] text-white/40 mt-4">
+        <div className="flex flex-wrap gap-x-6 gap-y-1.5 font-body text-label text-on-canvas/40 mt-4">
           {industry && (
             <span className="flex items-center gap-1.5"><Briefcase size={12} /> {industry}</span>
           )}
@@ -226,7 +226,7 @@ export function Field({ icon: Icon, label, error, optional, action, children }) 
   const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
-      <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1.5">
+      <label htmlFor={htmlFor} className="font-body text-label text-ink-soft flex items-center gap-1.5 mb-1.5">
         {Icon && <Icon size={13} />}
         {label}
         {optional && <span className="text-ink/35">(optional)</span>}
@@ -299,7 +299,7 @@ export function Modal({ title, icon: Icon, onClose, children, wide, dismissOnBac
   return (
     <div
       className="fixed inset-0 z-40 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm"
-      style={{ background: "rgba(22,26,51,0.82)" }}
+      style={{ background: "var(--color-scrim)" }}
       onClick={dismissOnBackdrop ? onClose : undefined}
     >
       <div
@@ -308,12 +308,12 @@ export function Modal({ title, icon: Icon, onClose, children, wide, dismissOnBac
         aria-modal="true"
         aria-labelledby={headingId}
         tabIndex={-1}
-        className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-lg border border-rule bg-white shadow-[0_25px_70px_rgba(0,0,0,0.45)] p-6 sm:p-8 relative my-8`}
+        className={`w-full ${wide ? "max-w-2xl" : "max-w-md"} rounded-lg border border-rule bg-surface shadow-[0_25px_70px_rgba(0,0,0,0.45)] p-6 sm:p-8 relative my-8`}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 flex items-center justify-center min-w-[44px] min-h-[44px] text-ink/40 hover:text-ink"
+          className="absolute top-3 right-3 flex items-center justify-center min-w-tap min-h-tap text-ink/40 hover:text-ink"
           aria-label="Close"
         >
           <X size={18} />
@@ -335,7 +335,7 @@ export function Modal({ title, icon: Icon, onClose, children, wide, dismissOnBac
 export function SummaryCard({ label, value, warn, accent }) {
   return (
     <div className="bg-transparent">
-      <p className="font-body text-[13px] text-ink-soft mb-1">{label}</p>
+      <p className="font-body text-label text-ink-soft mb-1">{label}</p>
       <p
         className={`font-mono text-xl sm:text-2xl rule-sum pb-1.5 inline-block min-w-full ${
           warn ? "text-clay" : accent ? "text-moss" : "text-ink"
@@ -349,7 +349,7 @@ export function SummaryCard({ label, value, warn, accent }) {
 
 export function EmptyState({ title, subtitle, action }) {
   return (
-    <div className="border border-dashed border-rule bg-white/60 px-6 py-14 text-center rounded-lg">
+    <div className="border border-dashed border-rule bg-on-canvas/60 px-6 py-14 text-center rounded-lg">
       <RulingIn className="mx-auto mb-5" />
       <p className="font-display text-lg font-semibold text-ink mb-1">{title}</p>
       {subtitle && <p className="font-body text-sm text-ink-soft mb-5 max-w-sm mx-auto">{subtitle}</p>}
@@ -433,7 +433,7 @@ export function Pill({ tone = "neutral", children }) {
     amber: "bg-amber/15 text-amber-deep",
   };
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-body text-[11px] font-medium ${tones[tone] || tones.neutral}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-body text-tiny font-medium ${tones[tone] || tones.neutral}`}>
       {children}
     </span>
   );
@@ -490,7 +490,7 @@ export function BackLink({ onClick, children = "All books" }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-[44px]"
+      className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-tap"
     >
       <ArrowLeft size={15} /> {children}
     </button>
@@ -504,9 +504,9 @@ export function SummaryPanel({ children, note, noteTone = "neutral" }) {
   const toneClass =
     noteTone === "positive" ? "text-moss" : noteTone === "negative" ? "text-clay" : "text-ink-soft";
   return (
-    <div className="bg-white border border-rule rounded-lg px-5 py-5 mb-8">
+    <div className="bg-surface border border-rule rounded-lg px-5 py-5 mb-8">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">{children}</div>
-      {note && <p className={`font-body text-[13px] mt-4 ${toneClass}`}>{note}</p>}
+      {note && <p className={`font-body text-label mt-4 ${toneClass}`}>{note}</p>}
     </div>
   );
 }
@@ -548,7 +548,7 @@ export function withViewTransition(update) {
 
 export function LedgerTable({ columns, children, caption, minWidth = 560, showHeader = true }) {
   return (
-    <div className="overflow-x-auto border border-rule bg-white rounded-lg">
+    <div className="overflow-x-auto border border-rule bg-surface rounded-lg">
       <table className="w-full border-collapse" style={{ minWidth }}>
         {caption && <caption className="sr-only">{caption}</caption>}
         {showHeader && (
@@ -558,7 +558,7 @@ export function LedgerTable({ columns, children, caption, minWidth = 560, showHe
               <th
                 key={c.key}
                 scope="col"
-                className={`font-body text-[11px] font-medium text-ink-soft px-4 pt-3.5 pb-2 border-b border-rule whitespace-nowrap ${
+                className={`font-body text-tiny font-medium text-ink-soft px-4 pt-3.5 pb-2 border-b border-rule whitespace-nowrap ${
                   c.align === "right" ? "text-right" : "text-left"
                 }`}
                 style={c.width ? { width: c.width } : undefined}

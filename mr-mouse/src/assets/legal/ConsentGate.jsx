@@ -32,13 +32,13 @@ export function ConsentCard({ purpose, onAccepted, compact = false }) {
   };
 
   return (
-    <div className={`rounded-xl border border-rule bg-white ${compact ? "p-4" : "p-5"}`}>
+    <div className={`rounded-xl border border-rule bg-surface ${compact ? "p-4" : "p-5"}`}>
       <div className="flex items-center gap-2 mb-2">
         <ShieldCheck size={16} className="text-action" />
         <h3 className="font-display text-base font-semibold text-ink">{info.title}</h3>
       </div>
-      {info.summary && <p className="font-body text-[13px] text-ink-soft mb-3">{info.summary} Before you switch it on:</p>}
-      <ul className="list-disc pl-5 font-body text-[13px] leading-relaxed text-ink-soft space-y-1 mb-4">
+      {info.summary && <p className="font-body text-label text-ink-soft mb-3">{info.summary} Before you switch it on:</p>}
+      <ul className="list-disc pl-5 font-body text-label leading-relaxed text-ink-soft space-y-1 mb-4">
         {info.points.map((point) => (
           <li key={point}>{point}</li>
         ))}
@@ -47,7 +47,7 @@ export function ConsentCard({ purpose, onAccepted, compact = false }) {
         I understand and agree. I can switch this off at any time in Settings → Privacy.
       </ConsentCheckbox>
       {error && (
-        <p role="alert" className="mt-3 font-body text-[13px] text-clay">
+        <p role="alert" className="mt-3 font-body text-label text-clay">
           {error}
         </p>
       )}
@@ -55,7 +55,7 @@ export function ConsentCard({ purpose, onAccepted, compact = false }) {
         type="button"
         onClick={agree}
         disabled={!checked || busy}
-        className="mt-4 rounded-xl bg-action text-white font-body text-sm font-medium py-2.5 px-5 hover:bg-action-deep transition-colors disabled:opacity-50"
+        className="mt-4 rounded-xl bg-action text-on-action font-body text-sm font-medium py-2.5 px-5 hover:bg-action-deep transition-colors disabled:opacity-50"
       >
         {busy ? "Saving…" : "Agree and switch on"}
       </button>
@@ -93,7 +93,7 @@ export function useConsentPrompt(purpose) {
   const prompt = pending ? (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ background: "rgba(22,26,51,0.82)" }}
+      style={{ background: "var(--color-scrim)" }}
       role="dialog"
       aria-modal="true"
       aria-label={CONSENTS[purpose].title}
@@ -107,7 +107,7 @@ export function useConsentPrompt(purpose) {
             action();
           }}
         />
-        <button type="button" onClick={() => setPending(null)} className="mt-3 w-full rounded-xl bg-white/90 text-ink text-sm font-medium py-2.5">
+        <button type="button" onClick={() => setPending(null)} className="mt-3 w-full rounded-xl bg-on-canvas/90 text-ink text-sm font-medium py-2.5">
           Not now
         </button>
       </div>

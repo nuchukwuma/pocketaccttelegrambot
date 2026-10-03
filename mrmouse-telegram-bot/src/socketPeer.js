@@ -83,6 +83,9 @@ export function ensureConnection(companyId) {
   // Passive background updates — how the bot "uploads to / takes from"
   // the mesh continuously, same as any other open device.
   socket.on("SYNC_EVENT", async ({ entity, action, payload }) => {
+    // Pictures (logos, product photos, receipts) are no use to the bot and
+    // would bloat its Turso cache: never stored here.
+    if (entity === "image") return;
     if (!isCacheMode() || !payload) return;
     try {
       if (action === "delete") await softDeleteEntity(companyId, entity, payload.id);
@@ -116,6 +119,7 @@ export function ensureConnection(companyId) {
     if (isCacheMode()) {
       try {
         for (const [table, records] of Object.entries(entities || {})) {
+          if (table === "images") continue;
           const entity = table === "pendingOrders" ? "pendingOrder" : table.replace(/s$/, "");
           for (const record of records) await upsertEntity(companyId, entity, record);
         }

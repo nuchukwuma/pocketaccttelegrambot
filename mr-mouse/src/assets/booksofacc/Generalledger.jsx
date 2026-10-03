@@ -53,19 +53,19 @@ export default function GeneralLedger({ onNavigate }) {
       <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-8 relative">
         <button
           onClick={() => onNavigate("books")}
-          className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-[44px]"
+          className="flex items-center gap-1.5 font-body text-sm text-ink-soft hover:text-ink mb-6 min-h-tap"
         >
           <ArrowLeft size={15} /> All books
         </button>
 
-        <div className="bg-white border border-rule rounded-lg px-5 py-5 mb-8">
+        <div className="bg-surface border border-rule rounded-lg px-5 py-5 mb-8">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
             <SummaryCard label="Total debit" value={formatMoney(totalDebit)} />
             <SummaryCard label="Total credit" value={formatMoney(totalCredit)} />
             <SummaryCard label="Accounts" value={accounts.length} />
           </div>
           {accounts.length > 0 && (
-            <p className={`font-body text-[13px] mt-4 ${balanced ? "text-moss" : "text-clay"}`}>
+            <p className={`font-body text-label mt-4 ${balanced ? "text-moss" : "text-clay"}`}>
               {balanced
                 ? "Debits and credits agree — the ledger balances."
                 : `Out of balance by ${formatMoney(Math.abs(totalDebit - totalCredit))}. Check for an entry posted on one side only.`}

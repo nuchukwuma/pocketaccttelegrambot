@@ -51,12 +51,12 @@ export default function PrivacySettings() {
   const optional = ["ai", "telegram", "whatsapp", "hordemart"];
 
   return (
-    <div className="rounded-xl border border-rule bg-white p-5">
+    <div className="rounded-xl border border-rule bg-surface p-5">
       <div className="flex items-center gap-2 mb-1">
         <ShieldCheck size={16} className="text-action" />
         <h3 className="font-display text-base font-semibold text-ink">Privacy and consent</h3>
       </div>
-      <p className="font-body text-[13px] text-ink-soft mb-4">
+      <p className="font-body text-label text-ink-soft mb-4">
         You accepted the{" "}
         <button type="button" className="underline text-action" onClick={() => setDoc("terms")}>
           Terms
@@ -73,7 +73,7 @@ export default function PrivacySettings() {
           <li key={purpose} className="flex items-center justify-between gap-3 py-3">
             <div>
               <div className="font-body text-sm text-ink">{CONSENTS[purpose].title}</div>
-              <div className="font-body text-[12px] text-ink/50">
+              <div className="font-body text-caption text-ink/50">
                 {has(purpose)
                   ? `Agreed ${new Date(consents[purpose].acceptedAt).toLocaleDateString("en-NG")}`
                   : "Off — you'll be asked before it's switched on"}
@@ -84,7 +84,7 @@ export default function PrivacySettings() {
                 type="button"
                 onClick={() => withdrawConsent(purpose)}
                 disabled={Boolean(busy)}
-                className="shrink-0 rounded-lg border border-clay/40 text-clay text-[13px] font-medium px-3 py-1.5 hover:bg-clay/8 disabled:opacity-50"
+                className="shrink-0 rounded-lg border border-clay/40 text-clay text-label font-medium px-3 py-1.5 hover:bg-clay/8 disabled:opacity-50"
               >
                 {busy === purpose ? "Withdrawing…" : "Withdraw"}
               </button>
@@ -93,7 +93,7 @@ export default function PrivacySettings() {
         ))}
       </ul>
       {message && (
-        <p role="status" className={`font-body text-[13px] mt-3 ${message.tone === "ok" ? "text-moss" : "text-clay"}`}>
+        <p role="status" className={`font-body text-label mt-3 ${message.tone === "ok" ? "text-moss" : "text-clay"}`}>
           {message.text}
         </p>
       )}

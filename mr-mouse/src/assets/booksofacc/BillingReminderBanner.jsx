@@ -14,7 +14,7 @@ import React, { useEffect, useState } from "react";
 import { AlertTriangle, X, Clock } from "lucide-react";
 import { useLedger } from "./Ledgercontext";
 import { useSubscription } from "../useSubscription";
-import { COLORS } from "../theme";
+import { tokenColor } from "../theme/tokens";
 
 const TRIAL_WARNING_THRESHOLD_DAYS = 7;
 
@@ -76,29 +76,29 @@ export default function BillingReminderBanner({ onOpenBilling }) {
     <div
       className="flex items-center justify-between gap-3 px-5 py-2.5 text-sm"
       style={{
-        background: urgent ? `${COLORS.clay}14` : `${COLORS.ink}08`,
-        borderBottom: `1px solid ${urgent ? `${COLORS.clay}30` : `${COLORS.ink}12`}`,
+        background: urgent ? tokenColor("clay", 8) : tokenColor("ink", 3),
+        borderBottom: `1px solid ${urgent ? tokenColor("clay", 19) : tokenColor("ink", 7)}`,
       }}
     >
       <div className="flex items-center gap-2 min-w-0">
         {urgent ? (
-          <AlertTriangle size={15} style={{ color: COLORS.clay }} className="shrink-0" />
+          <AlertTriangle size={15} style={{ color: tokenColor("clay") }} className="shrink-0" />
         ) : (
-          <Clock size={15} style={{ color: `${COLORS.ink}70` }} className="shrink-0" />
+          <Clock size={15} style={{ color: tokenColor("ink", 44) }} className="shrink-0" />
         )}
-        <span className="font-body truncate" style={{ color: urgent ? COLORS.clay : COLORS.ink }}>
+        <span className="font-body truncate" style={{ color: urgent ? tokenColor("clay") : tokenColor("ink") }}>
           {message}
         </span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={onOpenBilling}
-          className="rounded-full px-3 py-1 font-body text-xs font-medium text-white"
-          style={{ background: urgent ? COLORS.clay : COLORS.ink }}
+          className="rounded-full px-3 py-1 font-body text-xs font-medium text-on-action"
+          style={{ background: urgent ? tokenColor("clay") : tokenColor("canvas") }}
         >
           {subscription.status === "past_due" ? "Update payment" : "Subscribe"}
         </button>
-        <button onClick={dismiss} aria-label="Dismiss for today" style={{ color: `${COLORS.ink}50` }}>
+        <button onClick={dismiss} aria-label="Dismiss for today" style={{ color: tokenColor("ink", 31) }}>
           <X size={15} />
         </button>
       </div>

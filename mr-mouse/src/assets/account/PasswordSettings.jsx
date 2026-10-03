@@ -50,12 +50,12 @@ export default function PasswordSettings({ user }) {
   }
 
   return (
-    <form onSubmit={submit} className="rounded-xl border border-rule bg-white p-5" noValidate>
+    <form onSubmit={submit} className="rounded-xl border border-rule bg-surface p-5" noValidate>
       <div className="flex items-center gap-2 mb-1">
         <KeyRound size={16} className="text-action" />
         <h3 className="font-display text-base font-semibold text-ink">{hasPassword ? "Change your password" : "Choose a password"}</h3>
       </div>
-      <p className="font-body text-[13px] text-ink-soft mb-4">
+      <p className="font-body text-label text-ink-soft mb-4">
         {hasPassword
           ? "Enter your current password, then the new one."
           : "You signed in from HordeMart. Choose a password to also sign in on the Mr Mouse phone and desktop apps."}
@@ -63,7 +63,7 @@ export default function PasswordSettings({ user }) {
       <div className="space-y-3">
         {hasPassword && (
           <div>
-            <label htmlFor="current-password" className="font-body text-[13px] text-ink-soft block mb-1.5">
+            <label htmlFor="current-password" className="font-body text-label text-ink-soft block mb-1.5">
               Current password
             </label>
             <input
@@ -77,7 +77,7 @@ export default function PasswordSettings({ user }) {
           </div>
         )}
         <div>
-          <label htmlFor="new-password" className="font-body text-[13px] text-ink-soft block mb-1.5">
+          <label htmlFor="new-password" className="font-body text-label text-ink-soft block mb-1.5">
             New password
           </label>
           <input
@@ -92,14 +92,14 @@ export default function PasswordSettings({ user }) {
         </div>
       </div>
       {message && (
-        <p role="status" className={`font-body text-[13px] mt-3 ${message.tone === "ok" ? "text-moss" : "text-clay"}`}>
+        <p role="status" className={`font-body text-label mt-3 ${message.tone === "ok" ? "text-moss" : "text-clay"}`}>
           {message.text}
         </p>
       )}
       <button
         type="submit"
         disabled={busy || !next || (hasPassword && !current)}
-        className="mt-4 rounded-lg bg-action text-white text-sm font-medium px-4 py-2.5 hover:bg-action-deep disabled:opacity-50"
+        className="mt-4 rounded-lg bg-action text-on-action text-sm font-medium px-4 py-2.5 hover:bg-action-deep disabled:opacity-50"
       >
         {busy ? "Saving…" : hasPassword ? "Change password" : "Set password"}
       </button>

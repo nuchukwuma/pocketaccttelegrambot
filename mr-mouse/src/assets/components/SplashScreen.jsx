@@ -56,7 +56,7 @@ export default function SplashScreen({ ready = true, onDone }) {
       >
         {/* the page being ruled */}
         <rect x="58" y="14" width="204" height="132" rx="3"
-          fill="#FFFFFF" stroke="var(--color-rule)" strokeWidth="1.5" />
+          fill="var(--color-surface)" stroke="var(--color-rule)" strokeWidth="1.5" />
 
         {/* entry lines, drawn one after another */}
         {[0, 1, 2, 3, 4].map((i) => (
@@ -111,7 +111,7 @@ export default function SplashScreen({ ready = true, onDone }) {
       </svg>
 
       <p className="font-display text-xl font-semibold text-ink mt-7">Mr Mouse</p>
-      <p className="font-body text-[13px] text-ink-soft mt-1">Opening your books…</p>
+      <p className="font-body text-label text-ink-soft mt-1">Opening your books…</p>
     </div>
   );
 }

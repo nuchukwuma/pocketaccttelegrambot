@@ -185,7 +185,7 @@ function ConnectWhatsApp() {
   };
 
   return (
-    <div className="rounded-lg border border-rule bg-white p-5 max-w-md space-y-6">
+    <div className="rounded-lg border border-rule bg-surface p-5 max-w-md space-y-6">
       <section>
         <div className="flex items-center gap-2 mb-3">
           <MessageSquare size={18} className="text-moss" />
@@ -214,14 +214,14 @@ function ConnectWhatsApp() {
           </div>
 
           {instanceName && (
-            <p className="font-mono text-[10px] text-ink/40 mt-1 break-all">
+            <p className="font-mono text-micro text-ink/40 mt-1 break-all">
               {instanceName}
             </p>
           )}
         </div>
 
         {qr && !connected && (
-          <div className="rounded-lg border border-ink/10 p-3 mb-3 bg-white">
+          <div className="rounded-lg border border-ink/10 p-3 mb-3 bg-surface">
             <img
               src={qr}
               alt="WhatsApp connection QR code"
@@ -237,7 +237,7 @@ function ConnectWhatsApp() {
         <button
           onClick={generateQr}
           disabled={loadingQr || !business?.id}
-          className="w-full rounded-lg bg-action text-white font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full rounded-lg bg-action text-on-action font-body text-sm font-medium py-2.5 hover:bg-action-deep transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loadingQr ? (
             "Starting…"
@@ -304,7 +304,7 @@ function ConnectWhatsApp() {
                   <p className="font-body text-sm text-ink truncate">
                     {client.name || "WhatsApp client"}
                   </p>
-                  <p className="font-mono text-[10px] text-ink/50">
+                  <p className="font-mono text-micro text-ink/50">
                     {client.wa_id}
                   </p>
                 </div>
