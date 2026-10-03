@@ -14,6 +14,8 @@ async function parse(res) {
 function storeToken(data) {
   if (data?.token) {
     localStorage.setItem("token", data.token);
+    // Remembered so the next visit opens on "Sign in", not "Set up your business".
+    localStorage.setItem("mm-has-signed-in", "1");
     // A new session: consents are fetched again for this person.
     resetConsentCache();
   }

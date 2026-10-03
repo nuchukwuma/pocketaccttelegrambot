@@ -61,7 +61,15 @@ const emptySignin = { email: "", password: "" };
 export default function LoginPage({ onAuthenticated }) {
   const { signupNewCompany, login } = useAuth();
 
-  const [mode, setMode] = useState("signup");
+  // Someone who has signed in on this device before is most likely coming
+  // back, not opening a second business.
+  const [mode, setMode] = useState(() => {
+    try {
+      return localStorage.getItem("mm-has-signed-in") ? "signin" : "signup";
+    } catch {
+      return "signup";
+    }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState("idle");
   const [errors, setErrors] = useState({});

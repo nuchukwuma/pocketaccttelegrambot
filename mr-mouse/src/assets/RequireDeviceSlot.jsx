@@ -6,19 +6,27 @@
 // a 6th device onto a 5-seat plan.
 
 import React, { useEffect, useState } from "react";
-import { ShieldAlert, Loader2, LogOut } from "lucide-react";
+import { ShieldAlert, Loader2, LogOut, MonitorSmartphone, RotateCw } from "lucide-react";
 import { useLedger } from "./booksofacc/Ledgercontext";
 import { getOrCreateDeviceId, describeThisDevice } from "./deviceId";
 import { getAuthHeaders } from "./auth";
 import { COLORS } from "./theme";
+import { useDevices } from "./useDevices";
 
 const SERVER_URL = import.meta.env?.VITE_SYNC_SERVER_URL || "http://localhost:5000";
 
 
 export default function RequireDeviceSlot({ children }) {
-  const { business, logout } = useLedger();
+  const { business, currentUser, logout } = useLedger();
   const [status, setStatus] = useState("checking"); // checking | ok | blocked | error
   const [message, setMessage] = useState("");
+  const [code, setCode] = useState(null);
+  // Bumped to register again: after freeing a slot, or "Try again".
+  const [attempt, setAttempt] = useState(0);
+  const retry = () => {
+    setStatus("checking");
+    setAttempt((n) => n + 1);
+  };
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -46,6 +54,7 @@ export default function RequireDeviceSlot({ children }) {
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok) {
+          setCode(data.code || null);
           setStatus("blocked");
           setMessage(data.error || "This device isn't allowed on this account's current plan.");
           return;
@@ -62,7 +71,7 @@ export default function RequireDeviceSlot({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [business?.id]);
+  }, [business?.id, attempt]);
 
   if (status === "ok") return children;
 
@@ -85,6 +94,21 @@ export default function RequireDeviceSlot({ children }) {
         {status === "blocked" ? "Device limit reached" : "Couldn't verify this device"}
       </h2>
       <p className="text-sm max-w-sm" style={{ color: `${COLORS.ink}88` }}>{message}</p>
+      {/* The owner or an admin is the person the message says to ask, and
+          the rest of the app (Settings → Devices) is behind this screen —
+          so they free a slot here. */}
+      {status === "blocked" && code === "DEVICE_LIMIT_REACHED" && ["owner", "admin"].includes(currentUser?.role) && (
+        <FreeASlot businessId={business?.id} onFreed={retry} />
+      )}
+      {status === "error" && (
+        <button
+          onClick={retry}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border"
+          style={{ borderColor: `${COLORS.ink}33`, color: COLORS.ink }}
+        >
+          <RotateCw size={15} /> Try again
+        </button>
+      )}
       <button
         onClick={handleLogout}
         disabled={loggingOut}
@@ -94,6 +118,54 @@ export default function RequireDeviceSlot({ children }) {
         <LogOut size={16} />
         {loggingOut ? "Logging out…" : "Log out"}
       </button>
+    </div>
+  );
+}
+function FreeASlot({ businessId, onFreed }) {
+  const { devices, loading, error, removeDevice } = useDevices(businessId);
+  const [busy, setBusy] = useState(null);
+
+  const remove = async (device) => {
+    if (!window.confirm(`Sign "${device.label}" out of Mr Mouse to use this device instead?`)) return;
+    setBusy(device.id);
+    try {
+      await removeDevice(device.id);
+      onFreed();
+    } catch {
+      setBusy(null);
+    }
+  };
+
+  if (loading) return null;
+  return (
+    <div className="w-full max-w-sm rounded-xl border bg-white p-4 text-left" style={{ borderColor: `${COLORS.ink}1f` }}>
+      <p className="text-sm font-medium mb-2" style={{ color: COLORS.ink }}>
+        Use this device instead of one of these:
+      </p>
+      <ul className="divide-y" style={{ borderColor: `${COLORS.ink}14` }}>
+        {devices.map((device) => (
+          <li key={device.id} className="flex items-center justify-between gap-3 py-2">
+            <span className="flex items-center gap-2 text-sm" style={{ color: COLORS.ink }}>
+              <MonitorSmartphone size={15} />
+              <span>
+                {device.label}
+                <span className="block text-xs" style={{ color: `${COLORS.ink}77` }}>
+                  Last used {new Date(device.lastSeenAt).toLocaleDateString("en-NG")}
+                </span>
+              </span>
+            </span>
+            <button
+              onClick={() => remove(device)}
+              disabled={Boolean(busy)}
+              className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+              style={{ borderColor: `${COLORS.clay}66`, color: COLORS.clay }}
+            >
+              {busy === device.id ? "Removing…" : "Remove"}
+            </button>
+          </li>
+        ))}
+      </ul>
+      {error && <p className="text-xs mt-2" style={{ color: COLORS.clay }}>{error}</p>}
     </div>
   );
 }

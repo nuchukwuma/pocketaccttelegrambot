@@ -54,6 +54,7 @@ export default function HordeMartLink({ onSignedIn, onCancel }) {
   const finish = (data) => {
     if (data.token) {
       localStorage.setItem("token", data.token);
+      localStorage.setItem("mm-has-signed-in", "1");
       resetConsentCache();
     }
     window.history.replaceState(null, "", window.location.pathname);

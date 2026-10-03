@@ -44,12 +44,14 @@ function buildTestApp(io = fakeIo()) {
   const buildUsersRouter = require("../routes/users");
   const buildConsentsRouter = require("../routes/consents");
   const buildAiChatRouter = require("../routes/aiChat");
+  const buildDevicesRouter = require("../routes/devices");
   const { buildHordeMartSsoRouter, buildHordeMartSalesRouter } = require("../routes/hordemart");
 
   const app = express();
   app.use("/integrations/hordemart/sales", buildHordeMartSalesRouter(io));
   app.use(express.json({ limit: "2mb" }));
   app.use("/api/users", buildUsersRouter(io));
+  app.use("/api/devices", requireAuth, requireSameOrigin, buildDevicesRouter(io));
   app.use("/api/ai", requireAuth, requireSameOrigin, buildAiChatRouter(io));
   app.use("/api/consents", requireAuth, requireSameOrigin, buildConsentsRouter());
   app.use("/api/integrations/hordemart", requireSameOrigin, buildHordeMartSsoRouter());

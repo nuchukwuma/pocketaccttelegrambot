@@ -94,6 +94,20 @@ describe("Mr Mouse backend", { skip: skipWithoutDb }, () => {
     });
   });
 
+  describe("devices", () => {
+    test("the same device registering twice at once is not refused as a second device", async () => {
+      const { token, user } = await signUp();
+      const body = { businessId: user.businessId, deviceId: "device-1", label: "Chrome" };
+      const [a, b] = await Promise.all([
+        api.call("POST", "/api/devices/register", { token, body }),
+        api.call("POST", "/api/devices/register", { token, body }),
+      ]);
+      assert.deepEqual([a.status, b.status].map((s) => s < 300), [true, true], JSON.stringify([a.data, b.data]));
+      const other = await api.call("POST", "/api/devices/register", { token, body: { ...body, deviceId: "device-2" } });
+      assert.equal(other.status, 403, "a genuinely second device on a one-device plan is still refused");
+    });
+  });
+
   describe("consents", () => {
     test("accept, list, withdraw — and only the current version counts", async () => {
       const { token } = await signUp();
