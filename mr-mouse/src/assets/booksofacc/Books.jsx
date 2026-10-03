@@ -96,7 +96,7 @@ export default function Books({ onNavigate }) {
               <button
                 key={item.key}
                 onClick={() => onNavigate("book-page", { book: item.key })}
-                className="text-left rounded-lg border border-rule bg-white p-5 hover:border-action/50 transition-all flex items-start gap-4"
+                className="text-left rounded-lg border border-rule bg-surface p-5 hover:border-action/50 transition-all flex items-start gap-4"
               >
                 <div className="w-10 h-10 rounded-lg bg-paper-sunk flex items-center justify-center shrink-0">
                   <Icon size={18} className="text-moss" />
@@ -104,7 +104,7 @@ export default function Books({ onNavigate }) {
                 <div className="min-w-0 flex-1">
                   <h3 className="font-display text-lg text-ink mb-1">{item.title}</h3>
                   <p className="font-body text-sm text-ink/55 mb-2">{item.desc}</p>
-                  <span className="font-body text-[13px] font-medium text-action">{item.meta}</span>
+                  <span className="font-body text-label font-medium text-action">{item.meta}</span>
                 </div>
                 <ChevronRight size={16} className="text-ink/30 shrink-0 mt-1" />
               </button>

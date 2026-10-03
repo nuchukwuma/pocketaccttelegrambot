@@ -10,7 +10,7 @@ import { ShieldAlert, Loader2, LogOut, MonitorSmartphone, RotateCw } from "lucid
 import { useLedger } from "./booksofacc/Ledgercontext";
 import { getOrCreateDeviceId, describeThisDevice } from "./deviceId";
 import { getAuthHeaders } from "./auth";
-import { COLORS } from "./theme";
+import { tokenColor } from "./theme/tokens";
 import { useDevices } from "./useDevices";
 
 const SERVER_URL = import.meta.env?.VITE_SYNC_SERVER_URL || "http://localhost:5000";
@@ -77,9 +77,9 @@ export default function RequireDeviceSlot({ children }) {
 
   if (status === "checking") {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4" style={{ background: COLORS.paper }}>
-        <Loader2 size={28} className="animate-spin" color={COLORS.moss} />
-        <p className="text-sm" style={{ color: `${COLORS.ink}88` }}>Checking this device…</p>
+      <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4" style={{ background: tokenColor("paper") }}>
+        <Loader2 size={28} className="animate-spin" style={{ color: tokenColor("moss") }} />
+        <p className="text-sm" style={{ color: tokenColor("ink", 53) }}>Checking this device…</p>
       </div>
     );
   }
@@ -87,13 +87,13 @@ export default function RequireDeviceSlot({ children }) {
   return (
     <div
       className="min-h-screen w-full flex flex-col items-center justify-center gap-4 px-6 text-center"
-      style={{ background: COLORS.paper }}
+      style={{ background: tokenColor("paper") }}
     >
-      <ShieldAlert size={32} color={COLORS.clay} />
-      <h2 className="text-lg font-semibold" style={{ color: COLORS.ink }}>
+      <ShieldAlert size={32} style={{ color: tokenColor("clay") }} />
+      <h2 className="text-lg font-semibold" style={{ color: tokenColor("ink") }}>
         {status === "blocked" ? "Device limit reached" : "Couldn't verify this device"}
       </h2>
-      <p className="text-sm max-w-sm" style={{ color: `${COLORS.ink}88` }}>{message}</p>
+      <p className="text-sm max-w-sm" style={{ color: tokenColor("ink", 53) }}>{message}</p>
       {/* The owner or an admin is the person the message says to ask, and
           the rest of the app (Settings → Devices) is behind this screen —
           so they free a slot here. */}
@@ -104,7 +104,7 @@ export default function RequireDeviceSlot({ children }) {
         <button
           onClick={retry}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border"
-          style={{ borderColor: `${COLORS.ink}33`, color: COLORS.ink }}
+          style={{ borderColor: tokenColor("ink", 20), color: tokenColor("ink") }}
         >
           <RotateCw size={15} /> Try again
         </button>
@@ -113,7 +113,7 @@ export default function RequireDeviceSlot({ children }) {
         onClick={handleLogout}
         disabled={loggingOut}
         className="flex items-center gap-2 mt-2 px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-60"
-        style={{ background: COLORS.ink, color: COLORS.paper }}
+        style={{ background: tokenColor("canvas"), color: tokenColor("on-canvas") }}
       >
         <LogOut size={16} />
         {loggingOut ? "Logging out…" : "Log out"}
@@ -138,18 +138,18 @@ function FreeASlot({ businessId, onFreed }) {
 
   if (loading) return null;
   return (
-    <div className="w-full max-w-sm rounded-xl border bg-white p-4 text-left" style={{ borderColor: `${COLORS.ink}1f` }}>
-      <p className="text-sm font-medium mb-2" style={{ color: COLORS.ink }}>
+    <div className="w-full max-w-sm rounded-xl border bg-surface p-4 text-left" style={{ borderColor: tokenColor("ink", 12) }}>
+      <p className="text-sm font-medium mb-2" style={{ color: tokenColor("ink") }}>
         Use this device instead of one of these:
       </p>
-      <ul className="divide-y" style={{ borderColor: `${COLORS.ink}14` }}>
+      <ul className="divide-y" style={{ borderColor: tokenColor("ink", 8) }}>
         {devices.map((device) => (
           <li key={device.id} className="flex items-center justify-between gap-3 py-2">
-            <span className="flex items-center gap-2 text-sm" style={{ color: COLORS.ink }}>
+            <span className="flex items-center gap-2 text-sm" style={{ color: tokenColor("ink") }}>
               <MonitorSmartphone size={15} />
               <span>
                 {device.label}
-                <span className="block text-xs" style={{ color: `${COLORS.ink}77` }}>
+                <span className="block text-xs" style={{ color: tokenColor("ink", 47) }}>
                   Last used {new Date(device.lastSeenAt).toLocaleDateString("en-NG")}
                 </span>
               </span>
@@ -158,14 +158,14 @@ function FreeASlot({ businessId, onFreed }) {
               onClick={() => remove(device)}
               disabled={Boolean(busy)}
               className="shrink-0 rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
-              style={{ borderColor: `${COLORS.clay}66`, color: COLORS.clay }}
+              style={{ borderColor: tokenColor("clay", 40), color: tokenColor("clay") }}
             >
               {busy === device.id ? "Removing…" : "Remove"}
             </button>
           </li>
         ))}
       </ul>
-      {error && <p className="text-xs mt-2" style={{ color: COLORS.clay }}>{error}</p>}
+      {error && <p className="text-xs mt-2" style={{ color: tokenColor("clay") }}>{error}</p>}
     </div>
   );
 }

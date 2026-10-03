@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "./components/Db";
+import BusinessAvatar from "./components/BusinessAvatar";
 import {
   Building2,
   Landmark,
@@ -174,9 +177,9 @@ export default function LoginPage({ onAuthenticated }) {
         }
       `}</style>
 
-      <div className="w-full max-w-5xl bg-white rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-ink/10 min-h-[620px]">
+      <div className="w-full max-w-5xl bg-surface rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 border border-ink/10 min-h-[620px]">
 
-        <div className="lg:col-span-6 xl:col-span-6 p-6 sm:p-10 flex flex-col justify-between bg-white z-10">
+        <div className="lg:col-span-6 xl:col-span-6 p-6 sm:p-10 flex flex-col justify-between bg-surface z-10">
           <div>
             <div className="flex items-center gap-2 mb-8">
               <div className="w-7 h-7 rounded-full border border-ink/25 bg-paper flex items-center justify-center">
@@ -199,6 +202,7 @@ export default function LoginPage({ onAuthenticated }) {
               </div>
             ) : (
               <>
+                {mode === "signin" && <ReturningBusiness />}
                 <h1 className="font-display text-2xl sm:text-3xl font-medium text-ink mb-1">
                   {mode === "signup" ? "Set up your business" : "Welcome Back!"}
                 </h1>
@@ -312,7 +316,7 @@ export default function LoginPage({ onAuthenticated }) {
 
                       {/* Plan selection — chosen now, changeable later by the owner */}
                       <div>
-                        <label className="font-body text-[13px] text-ink-soft mb-2 block">
+                        <label className="font-body text-label text-ink-soft mb-2 block">
                           Plan
                         </label>
                         <div className="grid grid-cols-3 gap-2">
@@ -338,7 +342,7 @@ export default function LoginPage({ onAuthenticated }) {
                             onClick={() => setSignupField("planTier", "company")}
                           />
                         </div>
-                        <p className="font-body text-[11px] text-ink/40 mt-2">
+                        <p className="font-body text-tiny text-ink/40 mt-2">
                           You can change this later from account settings.
                         </p>
 
@@ -409,7 +413,7 @@ export default function LoginPage({ onAuthenticated }) {
                         .
                       </ConsentCheckbox>
                       {errors.acceptTerms && (
-                        <p role="alert" className="mt-2 font-body text-[12px] text-clay">{errors.acceptTerms}</p>
+                        <p role="alert" className="mt-2 font-body text-caption text-clay">{errors.acceptTerms}</p>
                       )}
                     </div>
                   )}
@@ -418,7 +422,7 @@ export default function LoginPage({ onAuthenticated }) {
                     <button
                       type="submit"
                       disabled={status === "submitting" || (mode === "signup" && !acceptTerms)}
-                      className="w-full flex-1 flex items-center justify-center gap-2 rounded-xl bg-action text-white font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-70"
+                      className="w-full flex-1 flex items-center justify-center gap-2 rounded-xl bg-action text-on-action font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-70"
                     >
                       {status === "submitting" ? (
                         <>
@@ -446,7 +450,7 @@ export default function LoginPage({ onAuthenticated }) {
             )}
           </div>
 
-          <p className="font-body text-[11px] text-ink/50 mt-6">
+          <p className="font-body text-tiny text-ink/50 mt-6">
             <button type="button" className="underline" onClick={() => setDoc("terms")}>Terms of Service</button>
             {" · "}
             <button type="button" className="underline" onClick={() => setDoc("privacy")}>Privacy Policy</button>
@@ -454,7 +458,7 @@ export default function LoginPage({ onAuthenticated }) {
           <LegalModal doc={doc} onClose={() => setDoc(null)} />
         </div>
 
-        <div className="lg:col-span-6 xl:col-span-6 relative bg-ink hidden lg:block overflow-hidden">
+        <div className="lg:col-span-6 xl:col-span-6 relative bg-canvas hidden lg:block overflow-hidden">
           <img src={mrMouseImg} alt="Ledgerly Illustration" className="w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
         </div>
@@ -463,11 +467,35 @@ export default function LoginPage({ onAuthenticated }) {
   );
 }
 
+/* A device that has signed in before greets its business by logo and
+   name. Both come from this device's own Dexie copy — nothing is fetched
+   before sign-in, and a device that never signed in shows nothing. */
+function ReturningBusiness() {
+  const lastId = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("mm-last-business") || "null")?.id || null;
+    } catch {
+      return null;
+    }
+  })();
+  const business = useLiveQuery(() => (lastId ? db.business.get(lastId) : undefined), [lastId]);
+  if (!business?.businessName) return null;
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <BusinessAvatar business={business} size={48} />
+      <span className="font-body text-sm text-ink-soft min-w-0">
+        Signing in to
+        <span className="block font-display text-base font-semibold text-ink truncate">{business.businessName}</span>
+      </span>
+    </div>
+  );
+}
+
 function Field({ icon: Icon, label, error, action, children }) {
   const { htmlFor, control } = linkLabel(children, React.useId());
   return (
     <div className={error ? "ledger-field-error" : ""}>
-      <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+      <label htmlFor={htmlFor} className="font-body text-label text-ink-soft flex items-center gap-1.5 mb-1">
         <Icon size={11} />
         {label}
       </label>
@@ -486,7 +514,7 @@ function EntryField({ icon: Icon, label, error, optional, children }) {
     <div className={error ? "ledger-field-error" : ""}>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label htmlFor={htmlFor} className="font-body text-[13px] text-ink-soft flex items-center gap-1.5 mb-1">
+          <label htmlFor={htmlFor} className="font-body text-label text-ink-soft flex items-center gap-1.5 mb-1">
             <Icon size={11} />
             {label}
             {optional && <span className="normal-case text-ink/30">(optional)</span>}
@@ -505,12 +533,12 @@ function PlanOption({ icon: Icon, label, sub, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex flex-col items-center gap-1 rounded-lg border-2 py-3 transition-all ${
-        active ? "border-action bg-action-sunk" : "border-rule bg-white"
+        active ? "border-action bg-action-sunk" : "border-rule bg-surface"
       }`}
     >
       <Icon size={16} className={active ? "text-action" : "text-ink/50"} />
       <span className={`font-body text-xs font-medium ${active ? "text-ink" : "text-ink/60"}`}>{label}</span>
-      <span className="font-mono text-[10px] text-ink/40">{sub}</span>
+      <span className="font-mono text-micro text-ink/40">{sub}</span>
     </button>
   );
 }

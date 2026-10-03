@@ -66,7 +66,7 @@ export default function SalesJournal({ onNavigate }) {
                     <LedgerCell>
                       <span className="block truncate">{t.productName || "—"}</span>
                       {t.description && (
-                        <span className="block text-[13px] text-ink-soft truncate">{t.description}</span>
+                        <span className="block text-label text-ink-soft truncate">{t.description}</span>
                       )}
                     </LedgerCell>
                     <LedgerCell num>{t.quantity || "—"}</LedgerCell>

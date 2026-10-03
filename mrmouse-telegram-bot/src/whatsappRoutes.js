@@ -345,7 +345,7 @@ whatsappRouter.delete("/clients/:waId", requireSignedIn, async (req, res) => {
 // ---------- Sending documents ----------
 
 whatsappRouter.post("/send-invoice", requireWhatsAppConsent, requireWhatsAppEntitlement, async (req, res) => {
-  const { companyId, invoice, waNumber } = req.body || {};
+  const { companyId, invoice, waNumber, brand } = req.body || {};
 
   if (!companyId || !invoice) {
     return res.status(400).json({
@@ -361,7 +361,7 @@ whatsappRouter.post("/send-invoice", requireWhatsAppConsent, requireWhatsAppEnti
 
   try {
     const business = await fetchBusiness(companyId);
-    const buffer = await buildInvoicePdf(business, invoice);
+    const buffer = await buildInvoicePdf(business, invoice, brand);
     const filename = `Invoice-${invoice.invoiceNumber || Date.now()}.pdf`;
 
     const result = await sendToCompany(

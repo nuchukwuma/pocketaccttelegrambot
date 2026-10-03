@@ -82,10 +82,10 @@ export default function PnLStatement({ onNavigate }) {
                 role="tab"
                 aria-selected={active}
                 onClick={() => switchTab(t.key)}
-                className={`flex items-center gap-1.5 rounded-md px-4 min-h-[44px] font-body text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-md px-4 min-h-tap font-body text-sm font-medium transition-colors ${
                   active
-                    ? "bg-action text-white"
-                    : "bg-white border border-rule text-ink-soft hover:text-ink"
+                    ? "bg-action text-on-action"
+                    : "bg-surface border border-rule text-ink-soft hover:text-ink"
                 }`}
               >
                 <Icon size={15} /> {t.label}
@@ -98,6 +98,7 @@ export default function PnLStatement({ onNavigate }) {
           {tab === "trial" ? (
             <>
               <SummaryPanel
+                data-tour="book-page"
                 note={
                   trialBalance.balanced
                     ? "Debits and credits agree."
@@ -120,7 +121,7 @@ export default function PnLStatement({ onNavigate }) {
                     return (
                       <LedgerRow key={r.name}>
                         <LedgerCell>{r.name}</LedgerCell>
-                        <LedgerCell className="text-ink-soft text-[13px]">{r.type}</LedgerCell>
+                        <LedgerCell className="text-ink-soft text-label">{r.type}</LedgerCell>
                         <LedgerCell num tone="positive" rule={last ? "sum" : undefined}>
                           {r.debit ? formatMoney(r.debit) : "—"}
                         </LedgerCell>
@@ -146,7 +147,7 @@ export default function PnLStatement({ onNavigate }) {
             </>
           ) : (
             <>
-              <SummaryPanel>
+              <SummaryPanel data-tour="book-page">
                 <SummaryCard label="Sales" value={formatMoney(pnl.sales)} accent />
                 <SummaryCard label="Purchases (COGS)" value={formatMoney(pnl.purchases)} warn={pnl.purchases > 0} />
                 <SummaryCard
@@ -156,13 +157,13 @@ export default function PnLStatement({ onNavigate }) {
                 />
               </SummaryPanel>
 
-              <div className="rounded-lg border border-rule bg-white overflow-hidden mb-6">
+              <div className="rounded-lg border border-rule bg-surface overflow-hidden mb-6">
                 <StatementLine label="Sales" amount={pnl.sales} />
                 <StatementLine label="Less: Purchases" amount={pnl.purchases} bracket rule="sum" />
                 <StatementLine label="Gross profit" amount={pnl.grossProfit} strong />
 
                 {pnl.expenseLines.length > 0 && (
-                  <p className="px-5 pt-4 pb-1 font-body text-[13px] text-ink-soft">
+                  <p className="px-5 pt-4 pb-1 font-body text-label text-ink-soft">
                     Less: Operating expenses
                   </p>
                 )}
@@ -177,8 +178,8 @@ export default function PnLStatement({ onNavigate }) {
                   />
                 ))}
 
-                <div className="px-5 py-5 flex items-center justify-between gap-6 bg-ink">
-                  <span className="font-display text-lg font-semibold text-white">Net profit</span>
+                <div className="px-5 py-5 flex items-center justify-between gap-6 bg-canvas">
+                  <span className="font-display text-lg font-semibold text-on-canvas">Net profit</span>
                   <span
                     className={`font-mono text-2xl whitespace-nowrap ${
                       pnl.netProfit >= 0 ? "text-moss-lift" : "text-clay-lift"
@@ -189,7 +190,7 @@ export default function PnLStatement({ onNavigate }) {
                 </div>
               </div>
 
-              <p className="font-body text-[13px] text-ink-soft max-w-prose">
+              <p className="font-body text-label text-ink-soft max-w-prose">
                 Sales and purchases include both cash/bank and credit transactions. Credit balances
                 still owed are tracked separately under Reminders.
               </p>

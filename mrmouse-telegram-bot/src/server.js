@@ -40,6 +40,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Invoices may carry the business's logo (a small JPEG, at most 60 KB);
+// every other route keeps express's 100 KB default.
+app.use("/api/whatsapp/send-invoice", express.json({ limit: "256kb" }));
 app.use(express.json());
 
 

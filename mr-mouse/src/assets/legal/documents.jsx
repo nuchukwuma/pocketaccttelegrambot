@@ -10,7 +10,7 @@ import { LEGAL_CONTACT, LEGAL_DRAFT, CONSENTS } from "./legal";
 function DraftNotice() {
   if (!LEGAL_DRAFT) return null;
   return (
-    <p className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-[12px] text-amber-deep mb-4">
+    <p className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-caption text-amber-deep mb-4">
       <strong>Draft.</strong> This describes how Mr Mouse works today and is being reviewed by our lawyers. It may change
       before it is final.
     </p>
@@ -18,9 +18,9 @@ function DraftNotice() {
 }
 
 const H = ({ children }) => <h4 className="font-display text-sm font-semibold text-ink mt-5 mb-1.5">{children}</h4>;
-const P = ({ children }) => <p className="font-body text-[13px] leading-relaxed text-ink-soft mb-2">{children}</p>;
+const P = ({ children }) => <p className="font-body text-label leading-relaxed text-ink-soft mb-2">{children}</p>;
 const L = ({ items }) => (
-  <ul className="list-disc pl-5 font-body text-[13px] leading-relaxed text-ink-soft space-y-1 mb-2">
+  <ul className="list-disc pl-5 font-body text-label leading-relaxed text-ink-soft space-y-1 mb-2">
     {items.map((item) => (
       <li key={item}>{item}</li>
     ))}

@@ -292,12 +292,12 @@ export default function Reminders({ onNavigate }) {
           title="Reminder delivery"
           subtitle="Choose where automatic deadline reminders should be sent."
         >
-          <div className="rounded-lg border border-rule bg-white p-5 space-y-5">
+          <div className="rounded-lg border border-rule bg-surface p-5 space-y-5">
             <div className="grid grid-cols-1 gap-3">
               <label className="flex items-center justify-between gap-4 rounded-lg border border-ink/10 px-4 py-3">
                 <span>
                   <span className="block font-body text-sm text-ink">Telegram</span>
-                  <span className="block font-body text-[11px] text-ink/45">Send to your linked Telegram chat</span>
+                  <span className="block font-body text-tiny text-ink/45">Send to your linked Telegram chat</span>
                 </span>
                 <input
                   type="checkbox"
@@ -334,7 +334,7 @@ export default function Reminders({ onNavigate }) {
             </div>
 
             {notificationSaving && (
-              <p className="font-body text-[11px] text-ink/45">Saving reminder settings…</p>
+              <p className="font-body text-tiny text-ink/45">Saving reminder settings…</p>
             )}
             {notificationError && (
               <p className="font-body text-xs text-clay">{notificationError}</p>
@@ -350,7 +350,7 @@ export default function Reminders({ onNavigate }) {
           action={
             <button
               onClick={() => openNewDeadline()}
-              className="flex items-center gap-1.5 rounded-lg bg-action text-white font-body text-xs font-medium px-3.5 py-2 hover:bg-action-deep transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-action text-on-action font-body text-xs font-medium px-3.5 py-2 hover:bg-action-deep transition-colors"
             >
               <Plus size={14} /> Add deadline
             </button>
@@ -378,7 +378,7 @@ export default function Reminders({ onNavigate }) {
                         <Pill tone="neutral">Due in {item.diff} {item.diff === 1 ? "day" : "days"}</Pill>
                       )}
                     </div>
-                    <p className="font-mono text-[11px] text-ink/50">
+                    <p className="font-mono text-tiny text-ink/50">
                       {item.partyName ? `${item.partyName} · ` : ""}
                       {item.amount ? `${formatMoney(item.amount)} · ` : ""}
                       Due date: {formatDate(item.dueDate)}
@@ -391,7 +391,7 @@ export default function Reminders({ onNavigate }) {
                       <>
                         <button
                           onClick={() => completeDeadline(item.id)}
-                          className="flex items-center gap-1.5 rounded-full border border-moss bg-moss/10 px-3 py-1.5 font-body text-xs text-moss hover:bg-action-deep hover:text-white transition-colors"
+                          className="flex items-center gap-1.5 rounded-full border border-moss bg-moss/10 px-3 py-1.5 font-body text-xs text-moss hover:bg-action-deep hover:text-on-action transition-colors"
                         >
                           <CheckCircle2 size={13} /> Resolve
                         </button>
@@ -482,7 +482,7 @@ export default function Reminders({ onNavigate }) {
           action={
             <button
               onClick={() => setShowOrderModal(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-action text-white font-body text-xs font-medium px-3.5 py-2 hover:bg-action-deep transition-colors"
+              className="flex items-center gap-1.5 rounded-lg bg-action text-on-action font-body text-xs font-medium px-3.5 py-2 hover:bg-action-deep transition-colors"
             >
               <Plus size={14} /> New order
             </button>
@@ -498,7 +498,7 @@ export default function Reminders({ onNavigate }) {
                     <p className="font-body text-sm text-ink truncate">
                       {o.quantity} × {o.productName} — {o.partyName}
                     </p>
-                    <p className="font-mono text-[11px] text-ink/40 mt-0.5">
+                    <p className="font-mono text-tiny text-ink/40 mt-0.5">
                       {formatDate(o.date)} · {o.type === "sale" ? "Owed to customer" : "Expected from supplier"}
                       {o.expectedBy ? ` · Expected: ${formatDate(o.expectedBy)}` : ""}
                       {o.note ? ` · ${o.note}` : ""}
@@ -546,7 +546,7 @@ export default function Reminders({ onNavigate }) {
               {settleErrors.amount && <p className="font-body text-xs text-clay mt-1">{settleErrors.amount}</p>}
             </Field>
             <div>
-              <label className="font-body text-[13px] text-ink-soft mb-2 block">Via</label>
+              <label className="font-body text-label text-ink-soft mb-2 block">Via</label>
               <div className="grid grid-cols-2 gap-2.5">
                 {[
                   { value: "cash", label: "Cash", icon: Wallet },
@@ -560,7 +560,7 @@ export default function Reminders({ onNavigate }) {
                       type="button"
                       onClick={() => setSettleForm((f) => ({ ...f, method: opt.value }))}
                       className={`flex items-center justify-center gap-2 rounded-lg border-2 py-2.5 font-body text-sm transition-all ${
-                        active ? "border-action bg-action text-white" : "border-rule bg-white text-ink/60"
+                        active ? "border-action bg-action text-on-action" : "border-rule bg-surface text-ink/60"
                       }`}
                     >
                       <Icon size={15} /> {opt.label}
@@ -571,7 +571,7 @@ export default function Reminders({ onNavigate }) {
             </div>
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
             >
               Save payment
             </button>
@@ -584,7 +584,7 @@ export default function Reminders({ onNavigate }) {
         <Modal title="New pending order" icon={PackageSearch} onClose={() => setShowOrderModal(false)}>
           <form onSubmit={submitOrder} noValidate className="space-y-5">
             <div>
-              <label className="font-body text-[13px] text-ink-soft mb-2 block">Type</label>
+              <label className="font-body text-label text-ink-soft mb-2 block">Type</label>
               <div className="grid grid-cols-2 gap-2.5">
                 {[
                   { value: "sale", label: "Owed to customer" },
@@ -595,7 +595,7 @@ export default function Reminders({ onNavigate }) {
                     type="button"
                     onClick={() => setOrderForm((f) => ({ ...f, type: opt.value }))}
                     className={`rounded-lg border-2 py-2.5 font-body text-sm transition-all ${
-                      orderForm.type === opt.value ? "border-action bg-action text-white" : "border-rule bg-white text-ink/60"
+                      orderForm.type === opt.value ? "border-action bg-action text-on-action" : "border-rule bg-surface text-ink/60"
                     }`}
                   >
                     {opt.label}
@@ -643,7 +643,7 @@ export default function Reminders({ onNavigate }) {
             </Field>
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
             >
               Save order
             </button>
@@ -656,7 +656,7 @@ export default function Reminders({ onNavigate }) {
         <Modal title="Add deadline / alert" icon={Calendar} onClose={() => setShowDeadlineModal(false)}>
           <form onSubmit={submitDeadline} noValidate className="space-y-5">
             <div>
-              <label className="font-body text-[13px] text-ink-soft mb-2 block">Category</label>
+              <label className="font-body text-label text-ink-soft mb-2 block">Category</label>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: "bill", label: "Bill / Rent" },
@@ -668,7 +668,7 @@ export default function Reminders({ onNavigate }) {
                     type="button"
                     onClick={() => setDeadlineForm((f) => ({ ...f, type: opt.value }))}
                     className={`rounded-lg border-2 py-2 text-xs font-body transition-all ${
-                      deadlineForm.type === opt.value ? "border-action bg-action text-white" : "border-rule bg-white text-ink/60"
+                      deadlineForm.type === opt.value ? "border-action bg-action text-on-action" : "border-rule bg-surface text-ink/60"
                     }`}
                   >
                     {opt.label}
@@ -726,7 +726,7 @@ export default function Reminders({ onNavigate }) {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-white font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-action text-on-action font-body text-sm font-medium py-3 hover:bg-action-deep transition-colors"
             >
               Save deadline
             </button>
@@ -756,7 +756,7 @@ function Section({ icon: Icon, title, subtitle, action, children }) {
 }
 
 function ListCard({ children }) {
-  return <div className="rounded-lg border border-rule bg-white overflow-hidden divide-y divide-rule">{children}</div>;
+  return <div className="rounded-lg border border-rule bg-surface overflow-hidden divide-y divide-rule">{children}</div>;
 }
 
 function PersonRow({ name, amount, lastDate, tone, deadline, onSettle, onSetDeadline, settleLabel }) {
@@ -771,7 +771,7 @@ function PersonRow({ name, amount, lastDate, tone, deadline, onSettle, onSetDead
             </Pill>
           )}
         </div>
-        <p className="font-mono text-[11px] text-ink/40 mt-0.5">Last activity {formatDate(lastDate)}</p>
+        <p className="font-mono text-tiny text-ink/40 mt-0.5">Last activity {formatDate(lastDate)}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className={`font-mono text-sm mr-1 ${tone === "green" ? "text-moss" : "text-clay"}`}>{formatMoney(amount)}</span>

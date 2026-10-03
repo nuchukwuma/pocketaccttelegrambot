@@ -56,8 +56,8 @@ export function Mouse({ carrying = false, scale = 1, ink = "var(--color-ink)", p
 export function LedgerDesk({ entriesThisWeek = 0, className = "" }) {
   const sheets = Math.max(0, Math.min(5, entriesThisWeek));
   const sage = "var(--color-moss-lift)";
-  const light = "rgba(255,255,255,0.88)";
-  const faint = "rgba(255,255,255,0.28)";
+  const light = "color-mix(in srgb, var(--color-on-canvas) 88%, transparent)";
+  const faint = "color-mix(in srgb, var(--color-on-canvas) 28%, transparent)";
 
   return (
     <svg
@@ -69,9 +69,9 @@ export function LedgerDesk({ entriesThisWeek = 0, className = "" }) {
     >
       {/* the open ledger, two leaves meeting at the spine */}
       <path d="M 66 96 L 66 44 Q 96 36 124 44 L 124 96 Q 96 88 66 96 Z"
-        fill="rgba(255,255,255,0.07)" stroke={faint} strokeWidth="1.4" />
+        fill="color-mix(in srgb, var(--color-on-canvas) 7%, transparent)" stroke={faint} strokeWidth="1.4" />
       <path d="M 124 96 L 124 44 Q 152 36 182 44 L 182 96 Q 152 88 124 96 Z"
-        fill="rgba(255,255,255,0.07)" stroke={faint} strokeWidth="1.4" />
+        fill="color-mix(in srgb, var(--color-on-canvas) 7%, transparent)" stroke={faint} strokeWidth="1.4" />
       <line x1="124" y1="44" x2="124" y2="96" stroke={faint} strokeWidth="1.4" />
 
       {/* ruled entries on the left leaf, the ruled total on the right */}
@@ -89,13 +89,13 @@ export function LedgerDesk({ entriesThisWeek = 0, className = "" }) {
 
       {/* the clerk, at the spine */}
       <g transform="translate(112 44)">
-        <Mouse scale={1.15} ink={light} paper="var(--color-ink)" animated={false} />
+        <Mouse scale={1.15} ink={light} paper="var(--color-canvas)" animated={false} />
       </g>
 
       {/* filed sheets, one per entry this week */}
       {Array.from({ length: sheets }).map((_, i) => (
         <rect key={i} x={200 + i * 3} y={88 - i * 7} width="34" height="12" rx="1.5"
-          fill="rgba(255,255,255,0.06)" stroke={faint} strokeWidth="1.1" />
+          fill="color-mix(in srgb, var(--color-on-canvas) 6%, transparent)" stroke={faint} strokeWidth="1.1" />
       ))}
       {sheets > 0 && (
         <line x1={202} y1={94 - (sheets - 1) * 7} x2={228} y2={94 - (sheets - 1) * 7}
@@ -104,7 +104,7 @@ export function LedgerDesk({ entriesThisWeek = 0, className = "" }) {
 
       {/* a runner bringing the next sheet over */}
       <g transform="translate(20 100)">
-        <Mouse carrying scale={1.15} ink={light} paper="var(--color-ink)" animated={false} />
+        <Mouse carrying scale={1.15} ink={light} paper="var(--color-canvas)" animated={false} />
       </g>
 
       {/* the desk */}

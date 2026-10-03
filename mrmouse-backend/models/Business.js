@@ -67,6 +67,10 @@ const BusinessSchema = new Schema(
     contact: { type: String, default: "" },
     industry: { type: String, default: "" },
     email: { type: String, default: "" },
+    // Profile and branding (Settings → Business profile). The logo is an
+    // image id; the bytes live in the synced images, not here.
+    logoImageId: { type: String, default: null },
+    brandColor: { type: String, default: null },
     plan: {
       tier: { type: String, enum: ["solo", "duo", "company"], default: "solo" },
       maxDevices: { type: Number, default: 1, min: 1 },

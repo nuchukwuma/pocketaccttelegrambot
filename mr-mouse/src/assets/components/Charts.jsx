@@ -43,8 +43,8 @@ const compact = (n) => {
 function Swatch({ color, label }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: color }} />
-      <span className="font-body text-[12px] text-ink-soft">{label}</span>
+      <span className="w-2.5 h-2.5 rounded-xs" style={{ background: color }} />
+      <span className="font-body text-caption text-ink-soft">{label}</span>
     </span>
   );
 }
@@ -145,7 +145,7 @@ export function CashflowChart({ days, maxDayValue }) {
           return (
             <span
               key={i}
-              className="absolute right-0 font-mono text-[10px] text-ink-soft -translate-y-1/2"
+              className="absolute right-0 font-mono text-micro text-ink-soft -translate-y-1/2"
               style={{ top: `${y(v)}px` }}
             >
               {compact(v)}
@@ -155,10 +155,10 @@ export function CashflowChart({ days, maxDayValue }) {
       </div>
 
       <div className="flex items-center justify-between mt-1.5 pl-[46px]">
-        <span className="font-body text-[11px] text-ink-soft">
+        <span className="font-body text-tiny text-ink-soft">
           {days.length ? shortDay(days[0].date) : ""}
         </span>
-        <span className="font-body text-[11px] text-ink-soft">
+        <span className="font-body text-tiny text-ink-soft">
           {days.length ? shortDay(days[days.length - 1].date) : ""}
         </span>
       </div>
@@ -167,7 +167,7 @@ export function CashflowChart({ days, maxDayValue }) {
         <Swatch color="var(--color-chart-in)" label="Money in" />
         <Swatch color="var(--color-chart-out)" label="Money out" />
         {days[peakIndex] && days[peakIndex].inflow + days[peakIndex].outflow > 0 && (
-          <span className="font-body text-[12px] text-ink-soft ml-auto">
+          <span className="font-body text-caption text-ink-soft ml-auto">
             Busiest: {shortDay(days[peakIndex].date)},{" "}
             <span className="font-mono">
               {formatMoney(days[peakIndex].inflow + days[peakIndex].outflow)}
@@ -177,10 +177,10 @@ export function CashflowChart({ days, maxDayValue }) {
       </div>
 
       {hover !== null && days[hover] && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-ink text-white rounded-md px-3 py-2 pointer-events-none shadow-lg">
-          <p className="font-body text-[11px] text-white/60 mb-0.5">{shortDay(days[hover].date)}</p>
-          <p className="font-mono text-[12px]">In {formatMoney(days[hover].inflow)}</p>
-          <p className="font-mono text-[12px]">Out {formatMoney(days[hover].outflow)}</p>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-canvas text-on-canvas rounded-md px-3 py-2 pointer-events-none shadow-lg">
+          <p className="font-body text-tiny text-on-canvas/60 mb-0.5">{shortDay(days[hover].date)}</p>
+          <p className="font-mono text-caption">In {formatMoney(days[hover].inflow)}</p>
+          <p className="font-mono text-caption">Out {formatMoney(days[hover].outflow)}</p>
         </div>
       )}
     </div>
@@ -205,12 +205,12 @@ export function ExpenseBars({ items }) {
       {items.map((e) => (
         <div key={e.label}>
           <div className="flex items-baseline justify-between gap-3 mb-1.5">
-            <span className="font-body text-[13px] text-ink truncate">{e.label}</span>
-            <span className="font-mono text-[12px] text-ink-soft shrink-0">{formatMoney(e.amount)}</span>
+            <span className="font-body text-label text-ink truncate">{e.label}</span>
+            <span className="font-mono text-caption text-ink-soft shrink-0">{formatMoney(e.amount)}</span>
           </div>
-          <div className="h-2 rounded-[2px] bg-paper-sunk overflow-hidden">
+          <div className="h-2 rounded-xs bg-paper-sunk overflow-hidden">
             <div
-              className="h-full rounded-[2px]"
+              className="h-full rounded-xs"
               style={{
                 width: `${Math.max(2, (e.amount / top) * 100)}%`,
                 background: "var(--color-chart-out)",

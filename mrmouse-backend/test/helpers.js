@@ -1,6 +1,8 @@
 // test/helpers.js — shared set-up. Environment first: auth.js refuses to
 // load without AUTH_SECRET.
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 process.env.AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString("hex");
 process.env.HORDEMART_SSO_SECRET = "s".repeat(48);
@@ -19,8 +21,15 @@ async function connectTestDb(name) {
   const base = MONGO_TEST_URI.replace(/\/[^/?]*(\?|$)/, `/mrmouse_test_${name}_${process.pid}$1`);
   await mongoose.connect(base, { serverSelectionTimeoutMS: 10_000 });
   await mongoose.connection.db.dropDatabase();
-  // Unique indexes must exist before the tests that rely on them.
-  await Promise.all(Object.values(mongoose.models).map((model) => model.init()));
+  // Unique indexes must exist before the tests that rely on them (a sale
+  // or a sign-in pass that works only once). Not model.init(): that is
+  // memoised, so after the drop above it can resolve with the indexes
+  // built on the database that was just dropped. createIndexes() builds
+  // them again, every time.
+  for (const file of fs.readdirSync(path.join(__dirname, "../models"))) {
+    if (file.endsWith(".js")) require(`../models/${file}`);
+  }
+  await Promise.all(Object.values(mongoose.models).map((model) => model.createIndexes()));
 }
 
 async function disconnectTestDb() {

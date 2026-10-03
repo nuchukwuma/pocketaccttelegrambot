@@ -86,6 +86,7 @@ export default function CashBook({ onNavigate }) {
         <BackLink onClick={() => onNavigate("books")} />
 
         <SummaryPanel
+          data-tour="book-page"
           note={
             rows.length
               ? `Net movement over ${rows.length} ${rows.length === 1 ? "entry" : "entries"}: ${formatMoney(net)}`
@@ -99,7 +100,7 @@ export default function CashBook({ onNavigate }) {
         </SummaryPanel>
 
         <div className="flex flex-wrap items-center gap-3 mb-5">
-          <div className="flex-1 min-w-[200px] flex items-center gap-2.5 rounded-md border border-rule bg-white px-4 min-h-[44px]">
+          <div className="flex-1 min-w-[200px] flex items-center gap-2.5 rounded-md border border-rule bg-surface px-4 min-h-tap">
             <Search size={16} className="text-ink/40 shrink-0" />
             <label htmlFor="cashbook-search" className="sr-only">
               Search particulars
@@ -118,10 +119,10 @@ export default function CashBook({ onNavigate }) {
                 key={f.key}
                 onClick={() => setFilter(f.key)}
                 aria-pressed={filter === f.key}
-                className={`rounded-md px-4 min-h-[44px] font-body text-sm font-medium transition-colors ${
+                className={`rounded-md px-4 min-h-tap font-body text-sm font-medium transition-colors ${
                   filter === f.key
-                    ? "bg-action text-white"
-                    : "bg-white border border-rule text-ink-soft hover:text-ink"
+                    ? "bg-action text-on-action"
+                    : "bg-surface border border-rule text-ink-soft hover:text-ink"
                 }`}
               >
                 {f.label}
@@ -150,7 +151,7 @@ export default function CashBook({ onNavigate }) {
                     <LedgerCell>
                       <span className="block truncate">{t.description || t.productName || "—"}</span>
                       {(t.party || t.category === "runningExpense") && (
-                        <span className="block text-[13px] text-ink-soft truncate">
+                        <span className="block text-label text-ink-soft truncate">
                           {t.party || "Running expense"}
                         </span>
                       )}

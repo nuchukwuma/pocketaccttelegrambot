@@ -107,7 +107,7 @@ export default function HordeMartLink({ onSignedIn, onCancel }) {
 
   return (
     <div className="min-h-screen bg-paper flex items-center justify-center p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-rule bg-white p-6 sm:p-8">
+      <div className="w-full max-w-lg rounded-2xl border border-rule bg-surface p-6 sm:p-8">
         <div className="flex items-center gap-2 mb-4">
           <Store size={18} className="text-action" />
           <span className="font-body text-sm text-ink-soft">From your HordeMart store</span>
@@ -135,7 +135,7 @@ export default function HordeMartLink({ onSignedIn, onCancel }) {
             <p className="font-body text-sm text-ink-soft mb-4">
               Signing in as <strong>{state.profile.name}</strong> ({state.profile.email}). Before we link your HordeMart store:
             </p>
-            <ul className="list-disc pl-5 font-body text-[13px] leading-relaxed text-ink-soft space-y-1 mb-5">
+            <ul className="list-disc pl-5 font-body text-label leading-relaxed text-ink-soft space-y-1 mb-5">
               {CONSENTS.hordemart.points.map((point) => (
                 <li key={point}>{point}</li>
               ))}
@@ -152,7 +152,7 @@ export default function HordeMartLink({ onSignedIn, onCancel }) {
               .
             </ConsentCheckbox>
             {state.message && (
-              <p role="alert" className="mt-3 font-body text-[13px] text-clay">
+              <p role="alert" className="mt-3 font-body text-label text-clay">
                 {state.message}
               </p>
             )}
@@ -161,7 +161,7 @@ export default function HordeMartLink({ onSignedIn, onCancel }) {
                 type="button"
                 onClick={confirm}
                 disabled={!checked || state.busy}
-                className="rounded-xl bg-action text-white font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-50"
+                className="rounded-xl bg-action text-on-action font-body text-sm font-medium py-3 px-6 hover:bg-action-deep transition-colors disabled:opacity-50"
               >
                 {state.busy ? "Linking…" : "Agree and continue"}
               </button>

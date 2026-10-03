@@ -31,6 +31,37 @@ db.version(2).stores({
   deadlines: "id, companyId, type, status, dueDate, partyName, updatedAt, deleted",
 });
 
+// v3: images and per-business preferences.
+//
+//   images  Logos, product photos and receipts, stored as Blobs (see
+//           ../media/images.js). `kind` says which. Synced as the
+//           "image" entity, one message per image.
+//   prefs   Per-business settings that follow the business to every
+//           device: theme, dashboard layout, tutorial progress. Primary
+//           key is `${companyId}:${key}`. Synced as the "pref" entity.
+//
+// New optional fields on existing records, set to null here so every
+// row has the same shape:
+//   products.imageId, transactions.receiptImageId,
+//   business.logoImageId, business.brandColor
+//
+// The upgrade only fills in missing fields. It does not touch
+// updatedAt, so upgrading a device does not re-sync every record, and
+// a record written by an older device (field absent) still reads fine.
+db.version(3)
+  .stores({
+    images: "id, companyId, kind, updatedAt, deleted",
+    prefs: "id, companyId, key, updatedAt, deleted",
+  })
+  .upgrade(async (tx) => {
+    const fill = (fields) => (record) => {
+      for (const field of fields) if (record[field] === undefined) record[field] = null;
+    };
+    await tx.table("products").toCollection().modify(fill(["imageId"]));
+    await tx.table("transactions").toCollection().modify(fill(["receiptImageId"]));
+    await tx.table("business").toCollection().modify(fill(["logoImageId", "brandColor"]));
+  });
+
 export function stampRecord(record, { isNew = false } = {}) {
   const now = new Date().toISOString();
   return {
