@@ -172,6 +172,32 @@ export function fromWireImage(payload) {
 }
 
 /**
+ * A stored image as a small JPEG on white, base64, for documents built
+ * elsewhere (the WhatsApp invoice PDF: its PDF library reads JPEG and
+ * PNG, not WebP). Null when the image isn't on this device.
+ */
+export async function imageForDocument(imageId, max = 256) {
+  const record = imageId ? await db.images.get(imageId) : null;
+  if (!record?.blob || record.deleted) return null;
+  const source = await decode(record.blob);
+  try {
+    const { width, height } = fit(source.width || source.naturalWidth, source.height || source.naturalHeight, max);
+    const canvas =
+      typeof OffscreenCanvas === "function"
+        ? new OffscreenCanvas(width, height)
+        : Object.assign(document.createElement("canvas"), { width, height });
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff"; // JPEG has no transparency: paper white behind it
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(source, 0, 0, width, height);
+    const blob = await encode(canvas, "image/jpeg", 0.88);
+    return { mime: "image/jpeg", data: await blobToBase64(blob) };
+  } finally {
+    source.close?.();
+  }
+}
+
+/**
  * A URL for a stored image, for <img src>. Null while loading, when the
  * id is empty, or when the image hasn't arrived on this device yet.
  * The URL is released when the image changes or the component goes.

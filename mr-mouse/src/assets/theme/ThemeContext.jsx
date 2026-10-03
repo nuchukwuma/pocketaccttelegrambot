@@ -9,9 +9,31 @@ import { COLOR_TOKENS, FONT_TOKENS, DEFAULT_THEME, completeTheme, tokenColor } f
    which resolve through the CSS variables this sets. So changing the
    theme repaints everything without re-rendering anything.
 
-   Stage 3 adds per-business presets and storage; this provider only
-   needs setTheme() to be called with the chosen theme.
+   The business's chosen theme lives in its synced preferences (see
+   AppearanceSync.jsx). The last applied theme is also cached in
+   localStorage, so a reload paints in the right colours straight away
+   instead of flashing the default first.
 --------------------------------------------------------------- */
+
+const CACHE_KEY = "mm-theme";
+
+function readCachedTheme() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    return cached && typeof cached.colors === "object" ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheTheme(theme) {
+  try {
+    if (theme.id === DEFAULT_THEME.id) localStorage.removeItem(CACHE_KEY);
+    else localStorage.setItem(CACHE_KEY, JSON.stringify({ id: theme.id, name: theme.name, scheme: theme.scheme, colors: theme.colors }));
+  } catch {
+    // Private mode or storage full: the theme still applies, it just isn't remembered.
+  }
+}
 
 const ThemeCtx = createContext(null);
 
@@ -33,12 +55,13 @@ export function applyTheme(theme, root = document.documentElement) {
   return t;
 }
 
-export function ThemeProvider({ initialTheme = DEFAULT_THEME, children }) {
-  const [theme, setThemeState] = useState(() => completeTheme(initialTheme));
+export function ThemeProvider({ initialTheme, children }) {
+  const [theme, setThemeState] = useState(() => completeTheme(initialTheme || readCachedTheme() || DEFAULT_THEME));
 
   // Layout effect: applied before paint, so a theme change never flashes.
   useLayoutEffect(() => {
     applyTheme(theme);
+    cacheTheme(theme);
   }, [theme]);
 
   const setTheme = useCallback((next) => setThemeState(completeTheme(next)), []);

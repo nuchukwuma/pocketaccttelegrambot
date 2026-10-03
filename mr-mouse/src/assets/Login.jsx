@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "./components/Db";
+import BusinessAvatar from "./components/BusinessAvatar";
 import {
   Building2,
   Landmark,
@@ -199,6 +202,7 @@ export default function LoginPage({ onAuthenticated }) {
               </div>
             ) : (
               <>
+                {mode === "signin" && <ReturningBusiness />}
                 <h1 className="font-display text-2xl sm:text-3xl font-medium text-ink mb-1">
                   {mode === "signup" ? "Set up your business" : "Welcome Back!"}
                 </h1>
@@ -459,6 +463,30 @@ export default function LoginPage({ onAuthenticated }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
         </div>
       </div>
+    </div>
+  );
+}
+
+/* A device that has signed in before greets its business by logo and
+   name. Both come from this device's own Dexie copy — nothing is fetched
+   before sign-in, and a device that never signed in shows nothing. */
+function ReturningBusiness() {
+  const lastId = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("mm-last-business") || "null")?.id || null;
+    } catch {
+      return null;
+    }
+  })();
+  const business = useLiveQuery(() => (lastId ? db.business.get(lastId) : undefined), [lastId]);
+  if (!business?.businessName) return null;
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <BusinessAvatar business={business} size={48} />
+      <span className="font-body text-sm text-ink-soft min-w-0">
+        Signing in to
+        <span className="block font-display text-base font-semibold text-ink truncate">{business.businessName}</span>
+      </span>
     </div>
   );
 }

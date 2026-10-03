@@ -105,6 +105,38 @@ export function useCompanySync(companyId) {
     }
   }, []);
 
+  /**
+   * Settings → Business profile. Shown at once on this device, confirmed
+   * by the server (which whitelists the fields), then announced to the
+   * business's other devices. Resolves to { ok, error? }; on a refusal the
+   * local copy goes back to the server's.
+   */
+  const saveBusiness = useCallback(
+    async (fields) => {
+      if (!companyId) return { ok: false, error: "Not signed in" };
+      const current = (await db.business.get(companyId)) || { id: companyId };
+      await db.business.put({ ...current, ...fields, id: companyId });
+      try {
+        const res = await fetch(`${SERVER_URL}/api/sync/business`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ ...fields, id: companyId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          await fetchBusinessFromServer();
+          return { ok: false, error: data.error || "Couldn't save the business details. Try again." };
+        }
+        if (data.business) await db.business.put(data.business);
+        return { ok: true };
+      } catch {
+        await db.business.put(current);
+        return { ok: false, error: "You're offline. Business details need a connection to save." };
+      }
+    },
+    [companyId, fetchBusinessFromServer]
+  );
+
   // ---- Building a "what's changed since X" snapshot from OUR OWN local data --
   // This is what we hand to a peer that asked us for a catch-up.
   const buildLocalSnapshot = useCallback(
@@ -294,6 +326,9 @@ export function useCompanySync(companyId) {
     });
 
     socket.on("disconnect", () => setConnectionStatus("disconnected"));
+
+    // Another device saved the business profile (name, logo, colour).
+    socket.on("BUSINESS_UPDATED", () => fetchBusinessFromServer());
     socket.io.on("reconnect_attempt", () => setConnectionStatus("connecting"));
 
     // Live change from another connected device.
@@ -351,7 +386,7 @@ export function useCompanySync(companyId) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [companyId, metaKey, requestStateFromPeers, flushOutbox, buildLocalSnapshot, applyPeerSnapshot, applyIncomingImage]);
+  }, [companyId, metaKey, requestStateFromPeers, flushOutbox, buildLocalSnapshot, applyPeerSnapshot, applyIncomingImage, fetchBusinessFromServer]);
 
   // ---- Business: fetch on mount, since it's still server-authoritative -------
   useEffect(() => {
@@ -417,6 +452,7 @@ export function useCompanySync(companyId) {
     invoices: invoices || [],
     deadlines: deadlines || [],
     mutate,
+    saveBusiness,
     saveImage,
     deleteImage,
     requestStateFromPeers,

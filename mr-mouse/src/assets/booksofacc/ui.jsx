@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Building2, Briefcase, MapPin, Phone, X, Home, PlusCircle, BookOpen, BellRing, Settings, LogOut, ArrowLeft } from "lucide-react";
+import { Briefcase, MapPin, Phone, X, Home, PlusCircle, BookOpen, BellRing, Settings, LogOut, ArrowLeft } from "lucide-react";
 import { useLedger } from "./Ledgercontext";
 import { useSubscription, computeAccessState } from "../useSubscription";
+import BusinessAvatar from "../components/BusinessAvatar";
 
 /* ---------------------------------------------------------------
    Shared helpers
@@ -102,15 +103,15 @@ export function TopNav({ business, current, onNavigate }) {
   return (
     <div className="sticky top-0 z-30 bg-canvas/97 backdrop-blur border-b border-on-canvas/10">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-3 min-h-nav">
+        {/* The business's own logo and name lead the bar: it's their books. */}
         <button
           onClick={() => onNavigate("dashboard")}
-          className="flex items-center gap-2 shrink-0 min-h-tap"
+          className="flex items-center gap-2.5 min-w-0 shrink min-h-tap"
+          aria-label={`${name} — home`}
         >
-          <div className="w-6 h-6 rounded-full border border-on-canvas/25 bg-on-canvas/10 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-moss-lift" />
-          </div>
-          <span className="font-display text-base font-semibold text-on-canvas hidden sm:inline">
-            Mr Mouse
+          <BusinessAvatar business={business} size={30} ring />
+          <span className="font-display text-sm font-semibold text-on-canvas hidden md:inline truncate max-w-[180px]">
+            {name}
           </span>
         </button>
 
@@ -123,9 +124,12 @@ export function TopNav({ business, current, onNavigate }) {
             return (
               <button
                 key={item.key}
+                data-tour={`nav-${item.key}`}
                 onClick={() => !disabled && onNavigate(item.key)}
                 disabled={disabled}
                 aria-current={active ? "page" : undefined}
+                // The text label is hidden on phones; keep the name for screen readers.
+                aria-label={item.label}
                 title={disabled ? "Subscribe to regain access" : undefined}
                 className={`flex items-center gap-1.5 rounded-md px-3 min-h-tap font-body text-sm whitespace-nowrap transition-colors ${
                   disabled
@@ -136,14 +140,13 @@ export function TopNav({ business, current, onNavigate }) {
                 }`}
               >
                 <Icon size={16} />
-                <span className="hidden xs:inline sm:inline">{item.label}</span>
+                <span className="hidden sm:inline">{item.label}</span>
               </button>
             );
           })}
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-body text-label text-on-canvas/45 hidden md:inline truncate max-w-[160px]">{name}</span>
           <button
             onClick={logout}
             className="flex items-center justify-center min-w-tap min-h-tap text-on-canvas/50 hover:text-on-canvas transition-colors"
@@ -175,8 +178,8 @@ export function PageHeader({ business, icon: Icon, title, subtitle, right }) {
   return (
     <div className="relative bg-canvas pb-9 pt-8 px-5 sm:px-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center gap-2 mb-5">
-          <Building2 size={14} className="text-moss-lift" />
+        <div className="flex items-center gap-2.5 mb-5">
+          <BusinessAvatar business={business} size={24} ring />
           <span className="font-body text-sm text-on-canvas/70">{name}</span>
         </div>
 
@@ -349,7 +352,7 @@ export function SummaryCard({ label, value, warn, accent }) {
 
 export function EmptyState({ title, subtitle, action }) {
   return (
-    <div className="border border-dashed border-rule bg-on-canvas/60 px-6 py-14 text-center rounded-lg">
+    <div className="border border-dashed border-rule bg-surface/60 px-6 py-14 text-center rounded-lg">
       <RulingIn className="mx-auto mb-5" />
       <p className="font-display text-lg font-semibold text-ink mb-1">{title}</p>
       {subtitle && <p className="font-body text-sm text-ink-soft mb-5 max-w-sm mx-auto">{subtitle}</p>}
@@ -500,11 +503,11 @@ export function BackLink({ onClick, children = "All books" }) {
 /* Groups the figures at the top of a book page onto one surface, so the
    page reads as "here are the totals, here is the detail" rather than as
    a row of identical floating cards. */
-export function SummaryPanel({ children, note, noteTone = "neutral" }) {
+export function SummaryPanel({ children, note, noteTone = "neutral", ...rest }) {
   const toneClass =
     noteTone === "positive" ? "text-moss" : noteTone === "negative" ? "text-clay" : "text-ink-soft";
   return (
-    <div className="bg-surface border border-rule rounded-lg px-5 py-5 mb-8">
+    <div className="bg-surface border border-rule rounded-lg px-5 py-5 mb-8" {...rest}>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">{children}</div>
       {note && <p className={`font-body text-label mt-4 ${toneClass}`}>{note}</p>}
     </div>

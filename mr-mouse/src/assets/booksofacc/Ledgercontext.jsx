@@ -119,6 +119,7 @@ export function LedgerProvider({ children }) {
     invoices,
     deadlines = [],
     mutate,
+    saveBusiness,
     saveImage,
     deleteImage,
   } = useCompanySync(companyId);
@@ -135,6 +136,22 @@ export function LedgerProvider({ children }) {
     },
     [companyId, mutate]
   );
+
+  /* Business profile edits (Settings > Business profile): only the
+     fields the form owns, which the server whitelists again.
+     Resolves to { ok, error? }. */
+  const saveBusinessProfile = saveBusiness;
+
+  // The sign-in screen greets a returning device with its business's
+  // name and logo. Only the id and name are kept outside Dexie.
+  useEffect(() => {
+    if (!business?.id) return;
+    try {
+      localStorage.setItem("mm-last-business", JSON.stringify({ id: business.id, name: business.businessName || "" }));
+    } catch {
+      // Not remembering the business only costs the greeting.
+    }
+  }, [business?.id, business?.businessName]);
 
   const setBusiness = useCallback((profile) => {
     setCurrentUser(profile);
@@ -662,6 +679,7 @@ export function LedgerProvider({ children }) {
     saveImage,
     deleteImage,
     setPref,
+    saveBusinessProfile,
     connectionStatus,
     bootstrapped,
     requestStateFromPeers,
@@ -707,10 +725,25 @@ export function useLedger() {
 }
 
 export { emptyPendingOrder };
-/** A per-business preference, live: re-renders when it changes on any device. */
-export function usePref(key, fallback = null) {
+/**
+ * A per-business preference, live: re-renders when it changes on any
+ * device. `loaded` is false until Dexie has answered, so a caller can
+ * tell "not set" from "not read yet" (the tour must not start on a
+ * device that simply hasn't read its progress yet).
+ */
+export function usePrefRow(key) {
   const { business } = useLedger();
   const companyId = business?.id;
-  const row = useLiveQuery(() => (companyId ? db.prefs.get(`${companyId}:${key}`) : undefined), [companyId, key]);
-  return row && !row.deleted ? row.value : fallback;
+  // null (not undefined) for a missing row, so useLiveQuery's own
+  // "still loading" undefined stays distinguishable.
+  const row = useLiveQuery(
+    async () => (companyId ? (await db.prefs.get(`${companyId}:${key}`)) ?? null : undefined),
+    [companyId, key]
+  );
+  return { loaded: row !== undefined, value: row && !row.deleted ? row.value : undefined };
+}
+
+export function usePref(key, fallback = null) {
+  const { value } = usePrefRow(key);
+  return value === undefined ? fallback : value;
 }

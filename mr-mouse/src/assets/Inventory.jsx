@@ -273,7 +273,7 @@ export default function InventoryPage({ onNavigate }) {
             </button>
 
             {/* Summary strip */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+            <div data-tour="inventory" className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
               <SummaryCard label="Products" value={totalProducts} />
               <SummaryCard label="Total units in stock" value={totalUnits} />
               <SummaryCard label="Low stock" value={lowStockCount} warn={lowStockCount > 0} />
@@ -464,7 +464,7 @@ export default function InventoryPage({ onNavigate }) {
                   >
                     <PackagePlus size={22} />
                     <span className="font-body text-sm font-semibold">Stock In</span>
-                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "load" ? "text-on-canvas/80" : "text-ink/40"}`}>
+                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "load" ? "text-on-action/80" : "text-ink/40"}`}>
                       New goods arrived
                     </span>
                   </button>
@@ -480,7 +480,7 @@ export default function InventoryPage({ onNavigate }) {
                   >
                     <PackageMinus size={22} />
                     <span className="font-body text-sm font-semibold">Stock Out</span>
-                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "offload" ? "text-on-canvas/80" : "text-ink/40"}`}>
+                    <span className={`font-body text-tiny text-center px-2 ${adjustForm.type === "offload" ? "text-on-action/80" : "text-ink/40"}`}>
                       Sold or removed
                     </span>
                   </button>

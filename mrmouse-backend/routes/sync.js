@@ -77,6 +77,11 @@ router.post("/business", requireOwnerOrAdmin, async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean();
 
+    // The business's other devices re-read the profile (new name, logo,
+    // brand colour). Only a nudge goes out; each device fetches the
+    // profile through the members-only GET above.
+    req.app.get("io")?.to(`company_${id}`).emit("BUSINESS_UPDATED", {});
+
     res.json({ ok: true, business: saved });
   } catch (err) {
     next(err);

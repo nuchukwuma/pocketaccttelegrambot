@@ -22,6 +22,9 @@ import ConnectTelegram from "../components/ConnectTelegram";
 import ConnectWhatsApp from "../components/ConnectWhatsApp";
 import PrivacySettings from "../legal/PrivacySettings";
 import PasswordSettings from "../account/PasswordSettings";
+import BusinessProfileTab from "../settings/BusinessProfileTab";
+import AppearanceTab from "../settings/AppearanceTab";
+import HelpTab from "../settings/HelpTab";
 import {
   GlobalStyle,
   TopNav,
@@ -43,11 +46,22 @@ const naira = (n) =>
     maximumFractionDigits: 0,
   }).format(Number(n || 0));
 
-export default function Settings({ onNavigate }) {
+const TABS = [
+  ["profile", "Business profile"],
+  ["appearance", "Appearance"],
+  ["plan", "Plan & Billing"],
+  ["ai", "AI Assistant"],
+  ["devices", "Devices"],
+  ["connect", "Connect"],
+  ["account", "Your account"],
+  ["help", "Help"],
+];
+
+export default function Settings({ onNavigate, params }) {
   const { business, currentUser } = useLedger();
   const { subscription, refresh } = useSubscription(business?.id);
   const blocked = computeAccessState(subscription) === "blocked";
-  const [tab, setTab] = useState("plan");
+  const [tab, setTab] = useState(() => (TABS.some(([key]) => key === params?.tab) ? params.tab : "plan"));
   const canManage = CAN_MANAGE_ROLES.includes(currentUser?.role);
 
   // Trigger immediate refresh if returning from Paystack checkout redirect
@@ -75,10 +89,11 @@ export default function Settings({ onNavigate }) {
             <ArrowLeft size={14} /> Back
           </button>
           <EmptyState title="Owner or admin access only" subtitle="Ask an account owner or admin to manage billing, devices, or channels." />
-          {/* Everyone manages their own password and consents. */}
+          {/* Everyone manages their own password and consents, and gets help. */}
           <div className="space-y-5 mt-8">
             <PasswordSettings user={currentUser} />
             <PrivacySettings />
+            <HelpTab onNavigate={onNavigate} />
           </div>
           <p className="mt-5 text-center text-xs text-ink/50">
             Billing complaints: <a className="underline" href={`mailto:${COMPLAINT_EMAIL}`}>{COMPLAINT_EMAIL}</a>
@@ -96,7 +111,7 @@ export default function Settings({ onNavigate }) {
         business={business}
         icon={settingsIcon}
         title="settings"
-        subtitle="Manage your subscription, devices, offline access, and connected channels."
+        subtitle="Your business profile and look, subscription, devices, and connected channels."
       />
 
       <div className="max-w-3xl mx-auto px-5 sm:px-8 pt-8 relative">
@@ -119,16 +134,12 @@ export default function Settings({ onNavigate }) {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-1.5 mb-6">
-          {[
-            ["plan", "Plan & Billing"],
-            ["ai", "AI Assistant"],
-            ["devices", "Devices"],
-            ["connect", "Connect"],
-            ["account", "Your account"],
-          ].map(([key, label]) => (
+        <div className="flex flex-wrap gap-1.5 mb-6" role="tablist" aria-label="Settings sections">
+          {TABS.map(([key, label]) => (
             <button
               key={key}
+              role="tab"
+              aria-selected={tab === key}
               onClick={() => setTab(key)}
               className={`rounded-full px-4 py-2 font-body text-sm font-medium transition-colors ${
                 tab === key ? "bg-action text-on-action" : "bg-surface border border-rule text-ink/60"
@@ -139,7 +150,13 @@ export default function Settings({ onNavigate }) {
           ))}
         </div>
 
-        {tab === "plan" ? (
+        {tab === "profile" ? (
+          <BusinessProfileTab />
+        ) : tab === "appearance" ? (
+          <AppearanceTab />
+        ) : tab === "help" ? (
+          <HelpTab onNavigate={onNavigate} />
+        ) : tab === "plan" ? (
           <PlanTab companyId={business?.id} currentUser={currentUser} />
         ) : tab === "ai" ? (
           <AiTab companyId={business?.id} />
@@ -408,7 +425,7 @@ function AiTab({ companyId }) {
                 <div className={`text-xs mt-1 ${premiumActive ? "text-on-action/60" : "text-ink/45"}`}>₦1,000/month</div>
               </div>
               {premiumActive && (
-                <span className="rounded-full bg-on-canvas/15 text-on-canvas px-2.5 py-1 font-body text-caption font-medium">
+                <span className="rounded-full bg-on-action/15 text-on-action px-2.5 py-1 font-body text-caption font-medium">
                   Active
                 </span>
               )}
@@ -425,7 +442,7 @@ function AiTab({ companyId }) {
                   <CheckCircle2 size={15} className={premiumActive ? "text-on-action shrink-0 mt-0.5" : "text-moss shrink-0 mt-0.5"} />
                   <div>
                     <div className={`font-body text-sm font-medium ${premiumActive ? "text-on-action" : "text-ink"}`}>{title}</div>
-                    <div className={`font-body text-xs mt-0.5 ${premiumActive ? "text-on-canvas/55" : "text-ink/50"}`}>{desc}</div>
+                    <div className={`font-body text-xs mt-0.5 ${premiumActive ? "text-on-action/70" : "text-ink/50"}`}>{desc}</div>
                   </div>
                 </div>
               ))}
@@ -441,7 +458,7 @@ function AiTab({ companyId }) {
               </button>
             )}
 
-            <p className={`font-body text-xs mt-4 ${premiumActive ? "text-on-canvas/50" : "text-ink/45"}`}>
+            <p className={`font-body text-xs mt-4 ${premiumActive ? "text-on-action/70" : "text-ink/45"}`}>
               Premium is optional. Free Gemini remains available when Premium AI is not active.
             </p>
           </div>

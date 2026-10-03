@@ -107,7 +107,7 @@ export function useConsentPrompt(purpose) {
             action();
           }}
         />
-        <button type="button" onClick={() => setPending(null)} className="mt-3 w-full rounded-xl bg-on-canvas/90 text-ink text-sm font-medium py-2.5">
+        <button type="button" onClick={() => setPending(null)} className="mt-3 w-full rounded-xl bg-surface/90 text-ink text-sm font-medium py-2.5">
           Not now
         </button>
       </div>

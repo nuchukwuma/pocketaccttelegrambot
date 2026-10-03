@@ -4,6 +4,8 @@ import { botFetch } from "../botApi";
 import { MessageSquare, Check, Loader2, Printer, Share2, Plus, Trash2, ArrowLeft } from "lucide-react";
 import { useLedger } from "./Ledgercontext";
 import { GlobalStyle, TopNav, Field, formatMoney } from "./ui";
+import InvoiceLetterhead, { PAPER_VARS, invoiceBrandColor } from "./InvoiceLetterhead";
+import { imageForDocument } from "../media/images";
 
 
 export default function InvoiceBuilder({ onNavigate }) {
@@ -108,10 +110,13 @@ export default function InvoiceBuilder({ onNavigate }) {
     }));
 
     try {
+      // The PDF wears the same logo and colour as the printed invoice.
+      const logo = await imageForDocument(business.logoImageId).catch(() => null);
       const res = await botFetch("/api/whatsapp/send-invoice", {
         method: "POST",
         body: JSON.stringify({
           companyId: business.id,
+          brand: { color: invoiceBrandColor(business), logo },
           invoice: {
             invoiceNumber: invoice.invoiceNumber,
             date: invoice.date,
@@ -175,7 +180,7 @@ export default function InvoiceBuilder({ onNavigate }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:block">
           {/* ---- Form ---- */}
-          <div className="bg-surface p-6 rounded-lg border border-rule print:hidden">
+          <div data-tour="invoice-form" className="bg-surface p-6 rounded-lg border border-rule print:hidden">
             <h2 className="font-display text-xl font-semibold mb-5 text-ink">Create invoice</h2>
 
             <div className="space-y-5 font-body text-sm">
@@ -339,26 +344,12 @@ export default function InvoiceBuilder({ onNavigate }) {
 
 function InvoicePreview({ business, invoice, total }) {
   return (
-    <div className="bg-surface p-8 rounded-lg border border-rule text-ink flex flex-col justify-between print:border-none print:p-0 print:w-full">
+    <div
+      className="bg-surface p-8 rounded-lg border border-rule text-ink flex flex-col justify-between print:border-none print:p-0 print:w-full"
+      style={PAPER_VARS}
+    >
       <div>
-        <div className="flex justify-between items-start gap-6 rule-sum pb-6 mb-6">
-          <div className="min-w-0">
-            <h1 className="font-display text-2xl font-bold text-ink mb-1">
-              {business?.name || "Your Business"}
-            </h1>
-            {business?.address && (
-              <p className="font-body text-label text-ink-soft">{business.address}</p>
-            )}
-            {business?.phone && (
-              <p className="font-body text-label text-ink-soft">{business.phone}</p>
-            )}
-          </div>
-          <div className="text-right shrink-0">
-            <h2 className="font-display text-lg font-semibold text-ink">Invoice</h2>
-            <p className="font-mono text-label text-ink-soft">#{invoice.invoiceNumber}</p>
-            <p className="font-mono text-label text-ink-soft">{invoice.date}</p>
-          </div>
-        </div>
+        <InvoiceLetterhead business={business} number={invoice.invoiceNumber} date={invoice.date} />
 
         <div className="mb-6">
           <p className="font-body text-label text-ink-soft mb-1">Billed to</p>

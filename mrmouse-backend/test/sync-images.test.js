@@ -154,4 +154,27 @@ describe("sync: images and preferences", { skip: MONGO_TEST_URI ? false : "MONGO
     assert.equal((await post({ id: businessId, brandColor: "red" })).status, 400);
     assert.equal((await post({ id: "someone-else", businessName: "x" })).status, 403);
   });
+
+  test("a profile save nudges the business's devices to re-read it, and nothing else", async () => {
+    const watcher = await connect();
+    const nudges = collect(watcher, "BUSINESS_UPDATED");
+    const res = await fetch(`${BASE}/api/sync/business`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: businessId, businessName: "Sync Ltd (again)" }),
+    });
+    assert.equal(res.status, 200);
+    await wait(300);
+    assert.equal(nudges.length, 1);
+    assert.deepEqual(nudges[0], {}, "the nudge carries no profile or billing data");
+
+    // A refused save announces nothing.
+    await fetch(`${BASE}/api/sync/business`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: businessId, brandColor: "not-a-colour" }),
+    });
+    await wait(300);
+    assert.equal(nudges.length, 1);
+  });
 });

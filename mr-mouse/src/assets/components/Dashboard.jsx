@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   PlusCircle,
   BookOpen,
@@ -6,24 +6,28 @@ import {
   Package,
   ArrowRight,
   ChevronRight,
-  ChevronLeft,
-  Lightbulb,
   Receipt,
   Trophy,
   AlertCircle,
-  X,
   Wifi,
   WifiOff,
   Loader2,
   Flame,
   Sparkles,
+  Wallet,
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+  HandCoins,
+  Truck,
 } from "lucide-react";
 import { tokenColor } from "../theme/tokens";
-import { useLedger } from "../booksofacc/Ledgercontext";
+import { useLedger, usePref } from "../booksofacc/Ledgercontext";
+import { LAYOUT_PREF } from "../theme/AppearanceSync";
+import { LAYOUT_IDS } from "./dashboardLayouts";
 import { GlobalStyle, TopNav, AnimatedFigure, formatMoney, formatDate } from "../booksofacc/ui.jsx";
 import DashboardHero from "./DashboardHero";
 import { CashflowChart, ExpenseBars } from "./Charts";
-import { useCompanySync } from "./useCompanySync";
 import { useSubscription } from "../useSubscription";
 import ConnectTelegram from "./ConnectTelegram";
 
@@ -188,58 +192,7 @@ function buildWeekPulse(transactions) {
   return { salesCount, salesRevenue, expensesTotal, prevSalesRevenue, prevExpensesTotal, net, verdict, tone, message };
 }
 
-const GLOSSARY_TIPS = [
-  {
-    term: "Cash Book",
-    tip: "Every naira that moves through actual cash or your bank account, recorded in one place — it's your record of real money in and out.",
-  },
-  {
-    term: "Petty Cash",
-    tip: "The small, everyday spends — transport, snacks, odd errands — kept in their own pool so they don't get lost among the bigger numbers.",
-  },
-  {
-    term: "Debtors",
-    tip: "People or businesses that owe you money — usually because you sold to them on credit and haven't been paid yet.",
-  },
-  {
-    term: "Creditors",
-    tip: "Suppliers you owe money to — you bought goods or services from them on credit and payment is still outstanding.",
-  },
-  {
-    term: "Sales / Purchases Journal",
-    tip: "A running list of everything sold or bought on credit — it's where you track money that's owed rather than already settled.",
-  },
-  {
-    term: "Ledger",
-    tip: "Every account gets its own running story here — Cash, Sales, each customer's balance — pulled together from all your entries.",
-  },
-  {
-    term: "Trial Balance",
-    tip: "A health check on your books: total debits should always equal total credits. If they don't, something was recorded wrong somewhere.",
-  },
-  {
-    term: "Gross Profit vs Net Profit",
-    tip: "Gross profit is sales minus the cost of the goods you sold. Net profit is what's left after every other expense is taken out too.",
-  },
-  {
-    term: "VAT Payable",
-    tip: "VAT you collect from customers isn't your money to keep — it's the government's. This tracks how much you currently owe them.",
-  },
-  {
-    term: "Assets vs Liabilities",
-    tip: "Assets are things the business owns or is owed — cash, stock, debtors. Liabilities are what the business owes to others.",
-  },
-  {
-    term: "Double-Entry Bookkeeping",
-    tip: "Every transaction touches two accounts, not one — money doesn't just appear, it always moves from somewhere to somewhere.",
-  },
-  {
-    term: "Invoice",
-    tip: "A formal bill for goods or services sold — it turns a sale into a paper trail both you and your customer can refer back to.",
-  },
-];
-
-export default function Dashboard({ onNavigate, companyId }) {
+export default function Dashboard({ onNavigate }) {
   const {
     business,
     accounts,
@@ -250,36 +203,19 @@ export default function Dashboard({ onNavigate, companyId }) {
     reminders = [],
     products,
     computeStock,
-    transactions: localTransactions,
+    transactions,
     settlements,
     streak,
+    connectionStatus,
+    bootstrapped,
   } = useLedger();
 
-  // Real-time synchronization hook integration
-  const targetCompanyId = companyId || business?.id || "default";
-  const { connectionStatus, bootstrapped, entries: syncedEntries } = useCompanySync(targetCompanyId);
+  // The provider's sync connection. The dashboard used to open a second
+  // socket of its own, which doubled every sync message on this screen.
   const { subscription: aiSubscription } = useSubscription(business?.id);
   const aiActive = Boolean(aiSubscription?.addOns?.ai);
 
-  // Map synced websocket entries into transactions fallback if populated
-  const transactions = useMemo(() => {
-    if (syncedEntries && syncedEntries.length > 0) {
-      return syncedEntries.map((e) => ({
-        id: e.id,
-        date: e.createdAt ? e.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
-        amount: e.amount || 0,
-        category: e.category || (e.type === "credit" ? "trade" : "runningExpense"),
-        tradeType: e.type === "credit" ? "sale" : "purchase",
-        method: e.method || "cash",
-        description: e.description,
-        party: e.party,
-        productName: e.productName,
-        quantity: e.quantity,
-      }));
-    }
-    return localTransactions;
-  }, [syncedEntries, localTransactions]);
-
+  const layoutPref = usePref(LAYOUT_PREF, "classic");
   const [period, setPeriod] = useState("week"); // 'week' | 'month'
   const periodStart = useMemo(() => daysAgoISO(period === "week" ? 6 : 29), [period]);
   const analytics = useMemo(
@@ -319,6 +255,240 @@ export default function Dashboard({ onNavigate, companyId }) {
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 6);
 
+  const layout = LAYOUT_IDS.includes(layoutPref) ? layoutPref : "classic";
+  const settleCount = debtors.length + creditors.length;
+
+  const deadlineBanner = deadlinesReached > 0 && (
+    <button
+      onClick={() => onNavigate("reminders")}
+      className="w-full flex items-center justify-between rounded-xl border border-clay/40 bg-clay/10 px-5 py-3.5 mb-6 text-left hover:border-clay transition-colors"
+    >
+      <span className="flex items-center gap-2.5 font-body text-sm font-medium text-clay">
+        <AlertCircle size={18} className="shrink-0" />
+        <span>
+          <strong>{deadlinesReached} deadline{deadlinesReached === 1 ? "" : "s"} reached!</strong> Check your reminders for due accounts or pending orders.
+        </span>
+      </span>
+      <span className="flex items-center gap-1 font-mono text-xs text-clay underline shrink-0">
+        View Reminders <ChevronRight size={14} />
+      </span>
+    </button>
+  );
+
+  const actions = (
+    <div data-tour="dashboard-actions" className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+      <NavCard
+        icon={Receipt}
+        title="New invoice"
+        desc="Build a sales invoice or purchase bill. Posts to the books and updates stock on save."
+        onClick={() => onNavigate("invoice")}
+        highlight
+        wide
+      />
+      <NavCard
+        icon={PlusCircle}
+        title="Add entry"
+        desc="Record a sale, purchase, or expense. It flows into the right book automatically."
+        onClick={() => onNavigate("addentry")}
+      />
+      <NavCard
+        icon={BookOpen}
+        title="Books"
+        desc="Cash book, petty cash, journals, ledgers, inventory and your P&L statement."
+        onClick={() => onNavigate("books")}
+      />
+      <NavCard
+        icon={BellRing}
+        title="Reminders"
+        desc={
+          deadlinesReached > 0
+            ? `${deadlinesReached} deadline${deadlinesReached === 1 ? "" : "s"} reached! ${settleCount} account${settleCount === 1 ? "" : "s"} to settle.`
+            : `${settleCount} account${settleCount === 1 ? "" : "s"} to settle, ${openOrders} order${openOrders === 1 ? "" : "s"} pending.`
+        }
+        onClick={() => onNavigate("reminders")}
+        badge={settleCount + openOrders}
+        hasDeadlineAlert={deadlinesReached > 0}
+      />
+      <NavCard
+        icon={Sparkles}
+        title="AI Assistant"
+        desc={
+          aiActive
+            ? "Ask questions or log entries in plain English — try the floating icon or Telegram."
+            : "₦1,000/mo — add entries and check balances by just talking to it."
+        }
+        onClick={() => onNavigate("settings")}
+      />
+    </div>
+  );
+
+  // Compact: one row of small buttons instead of the description cards.
+  const compactActions = (
+    <div data-tour="dashboard-actions" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+      {[
+        [Receipt, "New invoice", () => onNavigate("invoice"), true],
+        [PlusCircle, "Add entry", () => onNavigate("addentry")],
+        [BookOpen, "Books", () => onNavigate("books")],
+        [BellRing, `Reminders${settleCount + openOrders ? ` (${settleCount + openOrders})` : ""}`, () => onNavigate("reminders")],
+      ].map(([Icon, label, onClick, primary]) => (
+        <button
+          key={label}
+          onClick={onClick}
+          className={`flex items-center justify-center gap-2 rounded-md min-h-tap px-3 font-body text-sm font-medium transition-colors ${
+            primary ? "bg-action text-on-action hover:bg-action-deep" : "border border-rule bg-surface text-ink hover:border-action/50"
+          }`}
+        >
+          <Icon size={16} /> {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const snapshot = (
+    <div className="grid sm:grid-cols-3 gap-4 mb-10">
+      <SnapshotStat label="Net profit so far" amount={pnl.netProfit} tone={pnl.netProfit >= 0 ? "positive" : "negative"} />
+      <SnapshotStat label="Owed to you (debtors)" amount={totalDebtors} tone="neutral" onClick={() => onNavigate("reminders")} />
+      <SnapshotStat label="You owe (creditors)" amount={totalCreditors} tone="neutral" onClick={() => onNavigate("reminders")} />
+    </div>
+  );
+
+  // Compact: every key figure in one ruled list.
+  const figureList = (
+    <div className="rounded-lg border border-rule bg-surface mb-6">
+      <h2 className="font-display text-base font-semibold text-ink px-4 pt-3.5 pb-2">Key figures</h2>
+      <dl className="grid sm:grid-cols-2 sm:divide-x divide-rule border-t border-rule">
+        {[
+          [
+            ["Cash available", formatMoney(cashAvailable)],
+            ["Petty cash", formatMoney(pettyCash)],
+            [`Sales this week (${pulse.salesCount})`, formatMoney(pulse.salesRevenue), "positive"],
+            ["Expenses this week", formatMoney(pulse.expensesTotal), "negative"],
+            ["Net this week", formatMoney(pulse.net), pulse.net >= 0 ? "positive" : "negative"],
+          ],
+          [
+            ["Net profit so far", formatMoney(pnl.netProfit), pnl.netProfit >= 0 ? "positive" : "negative"],
+            ["Owed to you", formatMoney(totalDebtors)],
+            ["You owe", formatMoney(totalCreditors)],
+            ["Orders pending", openOrders],
+            ["Products running low", lowStock, lowStock > 0 ? "negative" : undefined],
+          ],
+        ].map((column, ci) => (
+          <div key={ci} className="divide-y divide-rule">
+            {column.map(([label, value, tone]) => (
+              <div key={label} className="flex items-center justify-between gap-3 px-4 py-2">
+                <dt className="font-body text-label text-ink-soft">{label}</dt>
+                <dd className={`font-mono text-sm ${tone === "positive" ? "text-moss" : tone === "negative" ? "text-clay" : "text-ink"}`}>{value}</dd>
+              </div>
+            ))}
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+
+  // Cards: big numbers with plain-language labels.
+  const bigCards = (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <BigStatCard icon={Wallet} tone="action" label="Money you can spend now" amount={cashAvailable} hint="Cash in hand plus your bank balance." />
+      <BigStatCard icon={TrendingUp} tone="positive" label="Sold this week" amount={pulse.salesRevenue} hint={`${pulse.salesCount} sale${pulse.salesCount === 1 ? "" : "s"} so far.`} />
+      <BigStatCard icon={TrendingDown} tone="negative" label="Spent this week" amount={pulse.expensesTotal} hint="Running costs and small expenses." />
+      <BigStatCard
+        icon={PiggyBank}
+        tone={pnl.netProfit >= 0 ? "positive" : "negative"}
+        label={pnl.netProfit >= 0 ? "Profit so far" : "Loss so far"}
+        amount={Math.abs(pnl.netProfit)}
+        hint="What's left after costs and expenses."
+      />
+      <BigStatCard icon={HandCoins} tone="caution" label="Customers owe you" amount={totalDebtors} hint={`${debtors.length} customer${debtors.length === 1 ? "" : "s"}. Tap to see who.`} onClick={() => onNavigate("reminders")} />
+      <BigStatCard icon={Truck} tone="neutral" label="You owe suppliers" amount={totalCreditors} hint={`${creditors.length} supplier${creditors.length === 1 ? "" : "s"}. Tap to see who.`} onClick={() => onNavigate("reminders")} />
+    </div>
+  );
+
+  const analyticsSection = (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl text-ink">Analytics</h2>
+        <div className="inline-flex rounded-lg border border-rule bg-surface p-1">
+          <PeriodButton active={period === "week"} onClick={() => setPeriod("week")} label="Week" />
+          <PeriodButton active={period === "month"} onClick={() => setPeriod("month")} label="Month" />
+        </div>
+      </div>
+
+      <div className={`grid lg:grid-cols-2 ${layout === "compact" ? "gap-3 mb-4" : "gap-4 mb-6"} items-start`}>
+        <CashflowCard analytics={analytics} />
+        <ExpenseBreakdownCard analytics={analytics} onNavigate={onNavigate} />
+      </div>
+
+      <div className={`grid sm:grid-cols-2 ${layout === "compact" ? "gap-3 mb-6" : "gap-4 mb-10"} items-start`}>
+        <StockPerformanceCard
+          title="Best performers"
+          icon={Trophy}
+          tone="positive"
+          items={analytics.bestSellers}
+          emptyText="No sales recorded in this period yet."
+          onNavigate={onNavigate}
+        />
+        <StockPerformanceCard
+          title="Needs attention"
+          icon={AlertCircle}
+          tone="negative"
+          items={analytics.worstSellers}
+          emptyText="Every product in stock has moved this period."
+          onNavigate={onNavigate}
+        />
+      </div>
+    </>
+  );
+
+  const lowStockBanner = lowStock > 0 && (
+    <button
+      onClick={() => onNavigate("book-page", { book: "inventory" })}
+      className="w-full flex items-center justify-between rounded-xl border border-clay/30 bg-clay/8 px-5 py-4 mb-10 text-left hover:border-clay/50 transition-colors"
+    >
+      <span className="flex items-center gap-2 font-body text-sm text-clay">
+        <Package size={16} />
+        {lowStock} product{lowStock === 1 ? "" : "s"} running low in inventory
+      </span>
+      <ChevronRight size={16} className="text-clay" />
+    </button>
+  );
+
+  const recentSection = (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-xl text-ink">Recent activity</h2>
+        <button
+          onClick={() => onNavigate("book-page", { book: "cashbook" })}
+          className="font-body text-label font-medium text-action hover:underline min-h-tap"
+        >
+          View books
+        </button>
+      </div>
+
+      {recent.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-rule bg-surface/60 px-6 py-12 text-center">
+          <p className="font-body text-sm text-ink/50">No entries yet — add your first transaction to get started.</p>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-rule bg-surface overflow-hidden">
+          <div className="divide-y divide-rule">
+            {recent.map((t) => (
+              <div key={t.id} className={`flex items-center justify-between gap-4 px-5 ${layout === "compact" ? "py-2.5" : "py-3.5"}`}>
+                <div className="min-w-0">
+                  <p className="font-body text-sm text-ink truncate">{t.description || t.productName || t.party || "Entry"}</p>
+                  <p className="font-body text-label text-ink-soft mt-0.5">
+                    {formatDate(t.date)} · {labelFor(t)}
+                  </p>
+                </div>
+                <span className={`font-mono text-sm shrink-0 ${t.tradeType === "sale" ? "text-moss" : "text-ink/70"}`}>{formatMoney(t.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen w-full bg-paper font-body">
       <GlobalStyle />
@@ -330,6 +500,7 @@ export default function Dashboard({ onNavigate, companyId }) {
         pettyCash={pettyCash}
         pulse={pulse}
         entriesThisWeek={pulse?.salesCount || 0}
+        compact={layout === "compact"}
         right={
           <div className="flex items-center gap-2.5 shrink-0">
             <StreakBadge streak={streak} />
@@ -338,180 +509,28 @@ export default function Dashboard({ onNavigate, companyId }) {
         }
       />
 
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 pt-8 relative pb-24">
-        {/* Quick learning pop-up — first login only, not every visit */}
-        <QuickLearningModal tips={GLOSSARY_TIPS} businessId={business?.id} />
-
-        {/* The week in figures. The verdict itself is in the hero. */}
-        <WeekPulseCard pulse={pulse} />
-
-        {/* Deadline Reached Banner Notice */}
-        {deadlinesReached > 0 && (
-          <button
-            onClick={() => onNavigate("reminders")}
-            className="w-full flex items-center justify-between rounded-xl border border-clay/40 bg-clay/10 px-5 py-3.5 mb-6 text-left hover:border-clay transition-colors"
-          >
-            <span className="flex items-center gap-2.5 font-body text-sm font-medium text-clay">
-              <AlertCircle size={18} className="shrink-0" />
-              <span>
-                <strong>{deadlinesReached} deadline{deadlinesReached === 1 ? "" : "s"} reached!</strong> Check your reminders for due accounts or pending orders.
-              </span>
-            </span>
-            <span className="flex items-center gap-1 font-mono text-xs text-clay underline shrink-0">
-              View Reminders <ChevronRight size={14} />
-            </span>
-          </button>
-        )}
-
-        {/* Quick actions */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-          <NavCard
-            icon={Receipt}
-            title="New invoice"
-            desc="Build a sales invoice or purchase bill. Posts to the books and updates stock on save."
-            onClick={() => onNavigate("invoice")}
-            highlight
-            wide
-          />
-          <NavCard
-            icon={PlusCircle}
-            title="Add entry"
-            desc="Record a sale, purchase, or expense. It flows into the right book automatically."
-            onClick={() => onNavigate("addentry")}
-          />
-          <NavCard
-            icon={BookOpen}
-            title="Books"
-            desc="Cash book, petty cash, journals, ledgers, inventory and your P&L statement."
-            onClick={() => onNavigate("books")}
-          />
-          <NavCard
-            icon={BellRing}
-            title="Reminders"
-            desc={
-              deadlinesReached > 0
-                ? `${deadlinesReached} deadline${deadlinesReached === 1 ? "" : "s"} reached! ${debtors.length + creditors.length} account${debtors.length + creditors.length === 1 ? "" : "s"} to settle.`
-                : `${debtors.length + creditors.length} account${debtors.length + creditors.length === 1 ? "" : "s"} to settle, ${openOrders} order${openOrders === 1 ? "" : "s"} pending.`
-            }
-            onClick={() => onNavigate("reminders")}
-            badge={debtors.length + creditors.length + openOrders}
-            hasDeadlineAlert={deadlinesReached > 0}
-          />
-          <NavCard
-            icon={Sparkles}
-            title="AI Assistant"
-            desc={
-              aiActive
-                ? "Ask questions or log entries in plain English \u2014 try the floating icon or Telegram."
-                : "\u20a61,000/mo \u2014 add entries and check balances by just talking to it."
-            }
-            onClick={() => onNavigate("settings")}
-          />
-        </div>
-
-        {/* This month's picture */}
-        <div className="grid sm:grid-cols-3 gap-4 mb-10">
-          <SnapshotStat label="Net profit so far" amount={pnl.netProfit} tone={pnl.netProfit >= 0 ? "positive" : "negative"} />
-          <SnapshotStat
-            label="Owed to you (debtors)"
-            amount={totalDebtors}
-            tone="neutral"
-            onClick={() => onNavigate("reminders")}
-          />
-          <SnapshotStat
-            label="You owe (creditors)"
-            amount={totalCreditors}
-            tone="neutral"
-            onClick={() => onNavigate("reminders")}
-          />
-        </div>
-
-        {/* Business analytics */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl text-ink">Analytics</h2>
-          <div className="inline-flex rounded-lg border border-rule bg-surface p-1">
-            <PeriodButton active={period === "week"} onClick={() => setPeriod("week")} label="Week" />
-            <PeriodButton active={period === "month"} onClick={() => setPeriod("month")} label="Month" />
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-4 mb-6 items-start">
-          <CashflowCard analytics={analytics} />
-          <ExpenseBreakdownCard analytics={analytics} onNavigate={onNavigate} />
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-4 mb-10 items-start">
-          <StockPerformanceCard
-            title="Best performers"
-            icon={Trophy}
-            tone="positive"
-            items={analytics.bestSellers}
-            emptyText="No sales recorded in this period yet."
-            onNavigate={onNavigate}
-          />
-          <StockPerformanceCard
-            title="Needs attention"
-            icon={AlertCircle}
-            tone="negative"
-            items={analytics.worstSellers}
-            emptyText="Every product in stock has moved this period."
-            onNavigate={onNavigate}
-          />
-        </div>
-
-        {lowStock > 0 && (
-          <button
-            onClick={() => onNavigate("book-page", { book: "inventory" })}
-            className="w-full flex items-center justify-between rounded-xl border border-clay/30 bg-clay/8 px-5 py-4 mb-10 text-left hover:border-clay/50 transition-colors"
-          >
-            <span className="flex items-center gap-2 font-body text-sm text-clay">
-              <Package size={16} />
-              {lowStock} product{lowStock === 1 ? "" : "s"} running low in inventory
-            </span>
-            <ChevronRight size={16} className="text-clay" />
-          </button>
-        )}
-
-        {/* Recent activity */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl text-ink">Recent activity</h2>
-          <button
-            onClick={() => onNavigate("book-page", { book: "cashbook" })}
-            className="font-body text-label font-medium text-action hover:underline min-h-tap"
-          >
-            View books
-          </button>
-        </div>
-
-        {recent.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-rule bg-on-canvas/60 px-6 py-12 text-center">
-            <p className="font-body text-sm text-ink/50">No entries yet — add your first transaction to get started.</p>
-          </div>
+      <div className={`max-w-5xl mx-auto px-5 sm:px-8 ${layout === "compact" ? "pt-5" : "pt-8"} relative pb-24`}>
+        {layout === "classic" && <WeekPulseCard pulse={pulse} />}
+        {deadlineBanner}
+        {layout === "compact" ? (
+          <>
+            {compactActions}
+            {figureList}
+          </>
+        ) : layout === "cards" ? (
+          <>
+            {bigCards}
+            {actions}
+          </>
         ) : (
-          <div className="rounded-lg border border-rule bg-surface overflow-hidden">
-            <div className="divide-y divide-rule">
-              {recent.map((t) => (
-                <div key={t.id} className="flex items-center justify-between gap-4 px-5 py-3.5">
-                  <div className="min-w-0">
-                    <p className="font-body text-sm text-ink truncate">
-                      {t.description || t.productName || t.party || "Entry"}
-                    </p>
-                    <p className="font-body text-label text-ink-soft mt-0.5">
-                      {formatDate(t.date)} · {labelFor(t)}
-                    </p>
-                  </div>
-                  <span
-                    className={`font-mono text-sm shrink-0 ${
-                      t.tradeType === "sale" ? "text-moss" : "text-ink/70"
-                    }`}
-                  >
-                    {formatMoney(t.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <>
+            {actions}
+            {snapshot}
+          </>
         )}
+        {analyticsSection}
+        {lowStockBanner}
+        {recentSection}
 
         {/* Integrations */}
         <div className="mt-10 border-t border-ink/10 pt-6">
@@ -522,6 +541,34 @@ export default function Dashboard({ onNavigate, companyId }) {
         </div>
       </div>
     </div>
+  );
+}
+
+const CARD_TONES = {
+  action: { icon: "text-action", chip: "bg-action-sunk", figure: "text-ink" },
+  positive: { icon: "text-moss", chip: "bg-moss/12", figure: "text-moss" },
+  negative: { icon: "text-clay", chip: "bg-clay/12", figure: "text-clay" },
+  caution: { icon: "text-amber-deep", chip: "bg-amber/15", figure: "text-ink" },
+  neutral: { icon: "text-ink-soft", chip: "bg-ink/8", figure: "text-ink" },
+};
+
+function BigStatCard({ icon: Icon, tone = "neutral", label, amount, hint, onClick }) {
+  const t = CARD_TONES[tone] || CARD_TONES.neutral;
+  const Wrapper = onClick ? "button" : "div";
+  return (
+    <Wrapper
+      onClick={onClick}
+      className={`w-full text-left rounded-2xl border border-rule bg-surface p-5 sm:p-6 ${onClick ? "hover:border-action/50 transition-colors" : ""}`}
+    >
+      <span className={`w-11 h-11 rounded-full flex items-center justify-center mb-4 ${t.chip}`}>
+        <Icon size={20} className={t.icon} />
+      </span>
+      <p className="font-body text-base font-medium text-ink mb-1">{label}</p>
+      <p className={`font-mono text-3xl sm:text-[2rem] leading-tight ${t.figure}`}>
+        <AnimatedFigure value={amount} format={formatMoney} />
+      </p>
+      {hint && <p className="font-body text-sm text-ink-soft mt-2">{hint}</p>}
+    </Wrapper>
   );
 }
 
@@ -574,96 +621,6 @@ function ConnectionBadge({ status, bootstrapped }) {
     >
       <Icon size={13} className={cfg.spin ? "animate-spin" : ""} />
       {cfg.label}
-    </div>
-  );
-}
-
-function QuickLearningModal({ tips, businessId }) {
-  const storageKey = businessId ? `seenQuickLearning:${businessId}` : null;
-  const [isOpen, setIsOpen] = useState(false);
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (!storageKey) return;
-    const alreadySeen = localStorage.getItem(storageKey);
-    if (!alreadySeen) setIsOpen(true);
-  }, [storageKey]);
-
-  const close = () => {
-    setIsOpen(false);
-    if (storageKey) localStorage.setItem(storageKey, "true");
-  };
-
-  if (!isOpen) return null;
-
-  const goTo = (i) => setIndex(((i % tips.length) + tips.length) % tips.length);
-  const current = tips[index];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-lg border border-rule bg-surface p-6 animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-ink/8 mb-5">
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-full bg-moss/12 flex items-center justify-center">
-              <Lightbulb size={16} className="text-moss" />
-            </span>
-            <h2 className="font-display text-lg text-ink">Quick Learning</h2>
-          </div>
-          <button
-            onClick={close}
-            aria-label="Close modal"
-            className="w-8 h-8 rounded-full bg-paper-sunk flex items-center justify-center text-ink/60 hover:text-ink transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="min-h-[120px]">
-          <p className="font-body text-label text-ink-soft mb-1">
-            Tip {index + 1} of {tips.length}
-          </p>
-          <h3 className="font-display text-xl text-ink mb-2">{current.term}</h3>
-          <p className="font-body text-sm text-ink/70 leading-relaxed">{current.tip}</p>
-        </div>
-
-        <div className="flex items-center justify-between pt-5 mt-4 border-t border-ink/8">
-          <div className="flex items-center gap-1.5">
-            {tips.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                aria-label={`Go to tip ${i + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-5 bg-action" : "w-1.5 bg-ink/15 hover:bg-ink/30"
-                }`}
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => goTo(index - 1)}
-              aria-label="Previous tip"
-              className="w-8 h-8 rounded-full border border-rule flex items-center justify-center text-ink/60 hover:text-ink hover:border-action/50 transition-colors"
-            >
-              <ChevronLeft size={16} />
-            </button>
-            <button
-              onClick={() => goTo(index + 1)}
-              aria-label="Next tip"
-              className="w-8 h-8 rounded-full border border-rule flex items-center justify-center text-ink/60 hover:text-ink hover:border-action/50 transition-colors"
-            >
-              <ChevronRight size={16} />
-            </button>
-            <button
-              onClick={close}
-              className="ml-2 rounded-lg bg-canvas px-4 py-2 font-body text-xs font-medium text-on-action hover:bg-action-deep transition-colors"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -801,7 +758,7 @@ function ExpenseBreakdownCard({ analytics, onNavigate }) {
       )}
 
       <button
-        onClick={() => onNavigate("book-page", { book: "pnl" })}
+        onClick={() => onNavigate("book-page", { book: "pnlstatement" })}
         className="pt-4 self-start font-body text-label font-medium text-action hover:underline min-h-tap"
       >
         View P&L

@@ -15,19 +15,54 @@ function toBuffer(doc) {
   });
 }
 
-function header(doc, business, title) {
-  doc.fontSize(18).text(business?.businessName || business?.name || "Business", { continued: false });
-  doc.fontSize(10).fillColor("#666").text(business?.location || business?.address || "");
+const HEX = /^#[0-9a-f]{6}$/i;
+const MAX_LOGO_BYTES = 60 * 1024;
+
+/**
+ * The business's brand for a document, checked: `color` must be a #rrggbb
+ * hex and `logo` a JPEG or PNG of at most 60 KB (the app sends a 256px
+ * JPEG). Anything else is dropped, so a bad brand still produces a plain
+ * invoice rather than a failed send.
+ */
+export function cleanBrand(brand) {
+  const color = typeof brand?.color === "string" && HEX.test(brand.color) ? brand.color : null;
+  let logo = null;
+  const data = brand?.logo?.data;
+  if (typeof data === "string" && data.length <= Math.ceil((MAX_LOGO_BYTES * 4) / 3) + 4 && /^[A-Za-z0-9+/]+={0,2}$/.test(data)) {
+    const bytes = Buffer.from(data, "base64");
+    const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const png = bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    if ((jpeg || png) && bytes.length <= MAX_LOGO_BYTES) logo = bytes;
+  }
+  return { color, logo };
+}
+
+function header(doc, business, title, brand = {}) {
+  if (brand.color) doc.rect(50, 36, 495, 5).fill(brand.color);
+  let textX = 50;
+  if (brand.logo) {
+    try {
+      doc.image(brand.logo, 50, 52, { fit: [56, 56] });
+      textX = 118;
+    } catch {
+      // An image pdfkit can't read: carry on without it.
+    }
+  }
+  const top = brand.logo || brand.color ? 54 : doc.y;
+  doc.fillColor("#000").fontSize(18).text(business?.businessName || business?.name || "Business", textX, top, { width: 545 - textX });
+  doc.fontSize(10).fillColor("#666").text(business?.location || business?.address || "", textX, doc.y, { width: 545 - textX });
+  if (brand.logo) doc.y = Math.max(doc.y, 112);
+  doc.x = 50;
   doc.moveDown(1);
-  doc.fontSize(14).fillColor("#000").text(title);
+  doc.fontSize(14).fillColor(brand.color || "#000").text(title, 50);
   doc.fontSize(9).fillColor("#666").text(new Date().toLocaleDateString());
   doc.moveDown(1);
   doc.fillColor("#000");
 }
 
-export async function buildInvoicePdf(business, invoice) {
+export async function buildInvoicePdf(business, invoice, brand = {}) {
   const doc = new PDFDocument({ size: "A4", margin: 50 });
-  header(doc, business, `Invoice ${invoice.invoiceNumber || ""}`);
+  header(doc, business, `Invoice ${invoice.invoiceNumber || ""}`, cleanBrand(brand));
 
   doc.fontSize(10);
   doc.text(`Billed to: ${invoice.party || "—"}`);

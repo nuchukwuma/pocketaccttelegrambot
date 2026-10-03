@@ -116,6 +116,7 @@ async function start() {
 
   // HordeMart sale messages are signed over their exact bytes too, so this
   // route reads its own raw body — before the JSON parser below.
+  app.set("io", io); // routes/sync.js announces profile changes
   app.use("/integrations/hordemart/sales", buildHordeMartSalesRouter(io));
 
   // All ordinary JSON routes can use the normal parser.
